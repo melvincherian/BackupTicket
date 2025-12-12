@@ -936,7 +936,7 @@ class MovieTicket {
   final String fullName;
   final String phoneNumber;
   final String email;
-  final String gender;
+  // final String gender;
   final String movieName;
   final String? language; // NEW FIELD: Language (optional)
   final String theatrePlace;
@@ -961,7 +961,7 @@ class MovieTicket {
     required this.fullName,
     required this.phoneNumber,
     required this.email,
-    required this.gender,
+    // required this.gender,
     required this.movieName,
     this.language, // NEW FIELD: Language (optional)
     required this.theatrePlace,
@@ -990,7 +990,7 @@ class MovieTicket {
       'fullName': fullName,
       'phoneNumber': phoneNumber,
       'email': email,
-      'gender': gender,
+      // 'gender': gender,
       'movieName': movieName,
       'language': language, // NEW FIELD: Add to map
       'theatrePlace': theatrePlace,
@@ -1021,7 +1021,7 @@ class MovieTicket {
       fullName: map['fullName'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
       email: map['email'] ?? '',
-      gender: map['gender'] ?? '',
+      // gender: map['gender'] ?? '',
       movieName: map['movieName'] ?? '',
       language: map['language'], // NEW FIELD: Get from map (nullable)
       theatrePlace: map['theatrePlace'] ?? '',
@@ -1079,7 +1079,7 @@ class MovieTicket {
       fullName: fullName ?? this.fullName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
-      gender: gender ?? this.gender,
+      // gender: gender ?? this.gender,
       movieName: movieName ?? this.movieName,
       language: language ?? this.language, // NEW FIELD
       theatrePlace: theatrePlace ?? this.theatrePlace,

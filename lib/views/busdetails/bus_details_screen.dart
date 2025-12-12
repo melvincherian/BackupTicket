@@ -617,6 +617,7 @@
 
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/model/bus_ticket_model.dart';
+import 'package:backup_ticket/services/notification_service.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
 import 'package:backup_ticket/widget/bus_ticket_popup_widget.dart';
 import 'package:flutter/material.dart';
@@ -647,6 +648,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
   }
 
   void _initializeRazorpay() {
+    NotificationService().initialize();
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -767,60 +769,150 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
   //   }
   // }
 
+  // Future<void> _savePurchaseToFirebase({
+  //   required String paymentId,
+  //   required String orderId,
+  //   required String signature,
+  // }) async {
+  //   final userId = await UserPreferences.getUserId();
+  //   if (userId == null) {
+  //     throw Exception('User not authenticated');
+  //   }
+
+  //   // Parse the number of tickets
+  //   final ticketCount = int.tryParse(widget.nooftickets ?? '1') ?? 1;
+  //   final totalAmount = widget.ticket.totalPrice * ticketCount;
+
+  //   final purchaseData = {
+  //     'ticketId': widget.ticket.id,
+  //     'buyerId': userId,
+  //     'buyerEmail': userId,
+  //     'sellerId': widget.ticket.sellerId,
+
+  //     // Ticket details
+  //     'busName': widget.ticket.busName,
+  //     'ticketType': widget.ticket.ticketType,
+  //     'pickupPoint': widget.ticket.pickupPoint,
+  //     'dropPoint': widget.ticket.dropPoint,
+  //     'dateOfJourney': widget.ticket.dateOfJourney,
+  //     'numberOfTickets': ticketCount, // Add this line
+  //     // Payment details
+  //     'paymentId': paymentId,
+  //     'orderId': orderId,
+  //     'signature': signature,
+  //     'amount': totalAmount, // Use calculated total amount
+  //     'pricePerTicket': widget.ticket.totalPrice, // Add this line
+  //     'currency': 'INR',
+  //     'paymentStatus': 'completed',
+
+  //     // Timestamps
+  //     'purchasedAt': FieldValue.serverTimestamp(),
+  //     'createdAt': FieldValue.serverTimestamp(),
+
+  //     // Additional info
+  //     'ticketImageUrl': widget.ticket.ticketImageUrl,
+  //     'status': 'confirmed',
+  //   };
+
+  //   await _firestore.collection('orders').add(purchaseData);
+
+  //   if (widget.ticket.id != null && widget.ticket.id!.isNotEmpty) {
+  //     await _firestore.collection('bus_tickets').doc(widget.ticket.id).update({
+  //       'status': 'sold',
+  //     });
+  //   }
+  // }
+
   Future<void> _savePurchaseToFirebase({
     required String paymentId,
     required String orderId,
     required String signature,
   }) async {
-    final userId = await UserPreferences.getUserId();
-    if (userId == null) {
-      throw Exception('User not authenticated');
-    }
+    try {
+      final userId = await UserPreferences.getUserId();
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
 
-    // Parse the number of tickets
-    final ticketCount = int.tryParse(widget.nooftickets ?? '1') ?? 1;
-    final totalAmount = widget.ticket.totalPrice * ticketCount;
+      // Parse the number of tickets
+      final ticketCount = int.tryParse(widget.nooftickets ?? '1') ?? 1;
+      final totalAmount = widget.ticket.totalPrice * ticketCount;
 
-    final purchaseData = {
-      'ticketId': widget.ticket.id,
-      'buyerId': userId,
-      'buyerEmail': userId,
-      'sellerId': widget.ticket.sellerId,
+      final purchaseData = {
+        'ticketId': widget.ticket.id,
+        'buyerId': userId,
+        'buyerEmail': userId,
+        'sellerId': widget.ticket.sellerId,
 
-      // Ticket details
-      'busName': widget.ticket.busName,
-      'ticketType': widget.ticket.ticketType,
-      'pickupPoint': widget.ticket.pickupPoint,
-      'dropPoint': widget.ticket.dropPoint,
-      'dateOfJourney': widget.ticket.dateOfJourney,
-      'numberOfTickets': ticketCount, // Add this line
-      // Payment details
-      'paymentId': paymentId,
-      'orderId': orderId,
-      'signature': signature,
-      'amount': totalAmount, // Use calculated total amount
-      'pricePerTicket': widget.ticket.totalPrice, // Add this line
-      'currency': 'INR',
-      'paymentStatus': 'completed',
+        // Ticket details
+        'busName': widget.ticket.busName,
+        'ticketType': widget.ticket.ticketType,
+        'pickupPoint': widget.ticket.pickupPoint,
+        'dropPoint': widget.ticket.dropPoint,
+        'dateOfJourney': widget.ticket.dateOfJourney,
+        'numberOfTickets': ticketCount,
 
-      // Timestamps
-      'purchasedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
+        // Payment details
+        'paymentId': paymentId,
+        'orderId': orderId,
+        'signature': signature,
+        'amount': totalAmount,
+        'pricePerTicket': widget.ticket.totalPrice,
+        'currency': 'INR',
+        'paymentStatus': 'completed',
 
-      // Additional info
-      'ticketImageUrl': widget.ticket.ticketImageUrl,
-      'status': 'confirmed',
-    };
+        // Timestamps
+        'purchasedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
 
-    await _firestore.collection('orders').add(purchaseData);
+        // Additional info
+        'ticketImageUrl': widget.ticket.ticketImageUrl,
+        'status': 'confirmed',
+      };
 
-    if (widget.ticket.id != null && widget.ticket.id!.isNotEmpty) {
-      await _firestore.collection('bus_tickets').doc(widget.ticket.id).update({
-        'status': 'sold',
-      });
+      // Save order to Firestore
+      DocumentReference orderRef = await _firestore
+          .collection('orders')
+          .add(purchaseData);
+
+      // Update ticket status
+      if (widget.ticket.id != null && widget.ticket.id!.isNotEmpty) {
+        await _firestore.collection('bus_tickets').doc(widget.ticket.id).update(
+          {'status': 'sold', 'soldAt': FieldValue.serverTimestamp()},
+        );
+      }
+
+      // ========== NOTIFICATIONS ==========
+
+      // 1. Show local push notification with bus-specific details
+      await NotificationService().showBusTicketPurchaseNotification(
+        busName: widget.ticket.busName,
+        pickupPoint: widget.ticket.pickupPoint,
+        dropPoint: widget.ticket.dropPoint,
+        numberOfTickets: ticketCount,
+        totalPrice: totalAmount,
+        paymentMethod: 'Online Payment',
+      );
+
+      // 2. Save notification to Firestore for history
+      await NotificationService().saveNotificationToFirestore(
+        userId: userId,
+        title: 'Bus Ticket Booked! 🚌',
+        message:
+            'Your $ticketCount ticket(s) for "${widget.ticket.busName}" from ${widget.ticket.pickupPoint} to ${widget.ticket.dropPoint} on ${widget.ticket.dateOfJourney} has been confirmed. Total: ₹${totalAmount.toStringAsFixed(2)}',
+        type: 'purchase',
+        ticketId: orderRef.id,
+        imageUrl: widget.ticket.ticketImageUrl,
+      );
+
+      // ========== END NOTIFICATIONS ==========
+
+      print('✅ Purchase saved successfully with notifications');
+    } catch (e) {
+      print('❌ Error in _savePurchaseToFirebase: $e');
+      rethrow; // Re-throw to handle in calling function
     }
   }
-
   // void _openRazorpayCheckout()async {
   //   if (_isProcessing) return;
 
@@ -1002,7 +1094,6 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     print(widget.ticket.ticketType);
 
     // Determine badge based on ticket type
@@ -1145,8 +1236,8 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                           Text(
                             'Journey Date: $dateOfJourney',
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                               color: Color(0xFF1976D2),
                             ),
                           ),
@@ -1227,7 +1318,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                     // Bus Ticket Card
                     _buildBusTicketCard(
                       companyName: widget.ticket.busName,
-                      badgeText: badgeText,
+                      badgeText: widget.ticket.ticketType,
                       badgeColor: badgeColor,
                       badgeTextColor: badgeTextColor,
                       fromCity: widget.ticket.pickupPoint,
@@ -1463,6 +1554,58 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                     ),
 
                     // Route line with bus icon
+                    // Expanded(
+                    //   child: Container(
+                    //     margin: const EdgeInsets.symmetric(horizontal: 8),
+                    //     child: Row(
+                    //       children: [
+                    //         Container(
+                    //           width: 8,
+                    //           height: 8,
+                    //           decoration: const BoxDecoration(
+                    //             color: Color(0xFF4A90E2),
+                    //             shape: BoxShape.circle,
+                    //           ),
+                    //         ),
+                    //         Expanded(
+                    //           child: Container(
+                    //             height: 2,
+                    //             decoration: const BoxDecoration(
+                    //               color: Color(0xFF4A90E2),
+                    //             ),
+                    //             child: Row(
+                    //               mainAxisAlignment: MainAxisAlignment.center,
+                    //               children: [
+                    //                 Container(
+                    //                   padding: const EdgeInsets.all(4),
+                    //                   decoration: const BoxDecoration(
+                    //                     color: Color(0xFF4A90E2),
+                    //                     shape: BoxShape.circle,
+                    //                   ),
+                    //                   child: const Icon(
+                    //                     Icons.directions_bus,
+                    //                     color: Colors.white,
+                    //                     size: 16,
+                    //                   ),
+                    //                 ),
+                    //               ],
+                    //             ),
+                    //           ),
+                    //         ),
+                    //         Container(
+                    //           width: 8,
+                    //           height: 8,
+                    //           decoration: const BoxDecoration(
+                    //             color: Color(0xFF4A90E2),
+                    //             shape: BoxShape.circle,
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+
+                    // Route line with train icon
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -1477,28 +1620,50 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                               ),
                             ),
                             Expanded(
-                              child: Container(
-                                height: 2,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF4A90E2),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF4A90E2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.directions_bus,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Dashed line
+                                  Container(
+                                    height: 2,
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final dashWidth = 4.0;
+                                        final dashSpace = 3.0;
+                                        final dashCount =
+                                            (constraints.maxWidth /
+                                                    (dashWidth + dashSpace))
+                                                .floor();
+                                        return Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: List.generate(dashCount, (
+                                            index,
+                                          ) {
+                                            return Container(
+                                              width: dashWidth,
+                                              height: 2,
+                                              color: Color(0xFF4A90E2),
+                                            );
+                                          }),
+                                        );
+                                      },
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  // Train icon in center
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF4A90E2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.train,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             Container(

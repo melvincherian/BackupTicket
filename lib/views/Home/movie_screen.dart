@@ -1900,6 +1900,11 @@ class _MovieScreenState extends State<MovieScreen> {
   String _userName = "Guest";
   String _userId = "";
 
+  PageController _pageController = PageController(viewportFraction: 0.55);
+  int _currentPage = 0;
+
+  int _selectedMovieIndex = -1;
+
   // Static movie images that will cycle through
   final List<String> _staticMovieImages = [
     'assets/ogposter.jpg',
@@ -1909,21 +1914,28 @@ class _MovieScreenState extends State<MovieScreen> {
 
   @override
   void initState() {
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page!.round();
+      });
+    });
     super.initState();
+
+    _initializeData();
     // Fetch tickets when the screen loads
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   context.read<MovieTicketProvider>().fetchAllTickets();
     //   _getCurrentLocation(); // Get user location
     // });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MovieTicketProvider>().fetchAllTickets();
-      context.read<MovieCategoryProvider>().fetchCategories();
-      context.read<UserProfileProvider>().loadUserProfile(_userId);
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   context.read<MovieTicketProvider>().fetchAllTickets();
+    //   context.read<MovieCategoryProvider>().fetchCategories();
+    //   context.read<UserProfileProvider>().loadUserProfile(_userId);
 
-      // _getCurrentLocation();
-      _loadUserName();
-    });
+    //   // _getCurrentLocation();
+    //   _loadUserName();
+    // });
   }
 
   //  Future<void> _loadUserName() async {
@@ -1931,10 +1943,36 @@ class _MovieScreenState extends State<MovieScreen> {
   //   if (mounted && name != null && name.isNotEmpty) {
   //     setState(() {
   //       _userName = name;
-  //       _userId=
   //     });
   //   }
   // }
+
+  Future<void> _initializeData() async {
+    // Load user data first
+    await _loadUserName();
+
+    // Then load everything else after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MovieTicketProvider>().fetchAllTickets();
+      context.read<MovieCategoryProvider>().fetchCategories();
+
+      // Load user profile with the userId we just got
+      if (_userId.isNotEmpty) {
+        context.read<UserProfileProvider>().loadUserProfile(_userId);
+      }
+
+      // Uncomment if you want location
+      // _getCurrentLocation();
+    });
+  }
+
+
+List<MovieTicket> _getTicketsByCategoryName(String categoryName, List<MovieTicket> tickets) {
+  return tickets.where((ticket) => 
+    ticket.movieName.toLowerCase().contains(categoryName.toLowerCase()) ||
+    ticket.ticketCategory?.toLowerCase() == categoryName.toLowerCase()
+  ).toList();
+}
 
   Future<void> _loadUserName() async {
     final name = await UserPreferences.getName();
@@ -2296,37 +2334,35 @@ class _MovieScreenState extends State<MovieScreen> {
                       ],
                     ),
 
-                    // Right side (notification) - currently commented out
-                    // You can uncomment this if you want the notification icon back
-                    // Container(
-                    //   padding: const EdgeInsets.all(8),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.white,
-                    //     shape: BoxShape.circle,
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black26,
-                    //         blurRadius: 4,
-                    //         offset: Offset(0, 2),
-                    //       ),
-                    //     ],
-                    //   ),
-                    //   child: GestureDetector(
-                    //     onTap: () {
-                    //       Navigator.push(
-                    //         context,
-                    //         MaterialPageRoute(
-                    //           builder: (context) => NotificationScreen(),
-                    //         ),
-                    //       );
-                    //     },
-                    //     child: const Icon(
-                    //       Icons.notifications_none,
-                    //       color: Colors.black87,
-                    //       size: 22,
-                    //     ),
-                    //   ),
-                    // ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NotificationScreen(),
+                            ),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.black87,
+                          size: 22,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2564,36 +2600,104 @@ class _MovieScreenState extends State<MovieScreen> {
                         }
 
                         // Show dynamic categories
+                        // return SizedBox(
+                        //   height: 280,
+                        //   child: ListView.builder(
+                        //     scrollDirection: Axis.horizontal,
+                        //     padding: const EdgeInsets.symmetric(
+                        //       horizontal: 16.0,
+                        //     ),
+                        //     itemCount: categories.length,
+                        //     itemBuilder: (context, index) {
+                        //       final category = categories[index];
+
+                        //       return GestureDetector(
+                        //         onTap: () {
+                        //           // Navigate to category-specific movies or detail screen
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (context) => ImageDetailScreen(
+                        //                 movieName: category.name,
+                        //                 assetImagePath: category.imageUrl,
+                        //                 languages: category.languages
+                        //                     .toString(),
+                        //               ),
+                        //             ),
+                        //           );
+                        //         },
+                        //         child: _buildCategoryCard(
+                        //           category.imageUrl,
+                        //           category.name,
+                        //           category.tags,
+                        //         ),
+                        //       );
+                        //     },
+                        //   ),
+                        // );
+
                         return SizedBox(
-                          height: 280,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
+                          height: 300,
+                          // width: 430,
+                          child: PageView.builder(
+                            controller: _pageController,
                             itemCount: categories.length,
                             itemBuilder: (context, index) {
                               final category = categories[index];
+                              return AnimatedContainer(
+                                duration: Duration(milliseconds: 250),
+                                curve: Curves.easeOut,
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: index == _currentPage ? 0 : 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: index == _currentPage
+                                      ? [
+                                          // BoxShadow(
+                                          //   color: Colors.black.withOpacity(
+                                          //     0.3,
+                                          //   ),
+                                          //   blurRadius: 15,
+                                          //   spreadRadius: 2,
+                                          //   offset: Offset(0, 6),
+                                          // ),
+                                        ]
+                                      : [],
+                                  border: index == _currentPage
+                                      ? Border.all(
+                                          color: Colors
+                                              .transparent, // Makes border invisible
+                                          width: 3,
+                                        )
+                                      : null,
 
-                              return GestureDetector(
-                                onTap: () {
-                                  // Navigate to category-specific movies or detail screen
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ImageDetailScreen(
-                                        movieName: category.name,
-                                        assetImagePath: category.imageUrl,
-                                        languages: category.languages
-                                            .toString(),
+                                  // border: index == _currentPage
+                                  //     ? Border.all(
+                                  //         // color: const Color.fromARGB(255, 181, 181, 181),
+                                  //         width: 3,
+                                  //       )
+                                  //     : null,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ImageDetailScreen(
+                                          movieName: category.name,
+                                          categoryId: category.id,
+                                          assetImagePath: category.imageUrl,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                child: _buildCategoryCard(
-                                  category.imageUrl,
-                                  category.name,
-                                  category.tags,
+                                    );
+                                  },
+                                  child: _buildCategoryCard(
+                                    category.imageUrl,
+                                    category.name,
+                                    category.tags,
+                                  ),
                                 ),
                               );
                             },
@@ -2655,147 +2759,354 @@ class _MovieScreenState extends State<MovieScreen> {
     );
   }
 
-  // Build the nearby tickets section with location filtering
+
+
   Widget _buildNearbyTicketsSection() {
-    return Consumer<MovieTicketProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading || _isLoadingLocation) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        if (provider.error != null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Text(
-                    'Error: ${provider.error}',
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () => provider.fetchAllTickets(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        // Use nearby tickets if location is available, otherwise show all tickets
-        List<MovieTicket> ticketsToShow = _userPosition != null
-            ? _nearbyTickets
-            : provider.tickets;
-
-        if (ticketsToShow.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Icon(
-                    _userPosition != null
-                        ? Icons.location_off
-                        : Icons.movie_outlined,
-                    size: 48,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _userPosition != null
-                        ? 'No tickets found within ${_maxDistanceKm.toInt()}km'
-                        : 'No tickets available',
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  if (_userPosition != null) ...[
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _maxDistanceKm = _maxDistanceKm == 10 ? 50 : 10;
-                        });
-                        _filterNearbyTickets();
-                      },
-                      child: Text(
-                        'Search within ${_maxDistanceKm == 10 ? 50 : 10}km instead',
-                        style: const TextStyle(color: Colors.blue),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        }
-
-        // Display only first 4 tickets (for "See All" functionality)
-        final displayTickets = ticketsToShow.take(4).toList();
-
-        return Column(
-          children: [
-            // Distance filter controls (optional)
-            if (_userPosition != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  children: [
-                    // const Text('Within: '),
-                    // DropdownButton<double>(
-                    //   value: _maxDistanceKm,
-                    //   items: [5.0, 10.0, 25.0, 50.0].map((distance) {
-                    //     return DropdownMenuItem(
-                    //       value: distance,
-                    //       child: Text('${distance.toInt()}km'),
-                    //     );
-                    //   }).toList(),
-                    //   onChanged: (newDistance) {
-                    //     if (newDistance != null) {
-                    //       setState(() {
-                    //         _maxDistanceKm = newDistance;
-                    //       });
-                    //       _filterNearbyTickets();
-                    //     }
-                    //   },
-                    // ),
-                    const Spacer(),
-                    // TextButton.icon(
-                    //   onPressed: _getCurrentLocation,
-                    //   icon: const Icon(Icons.location_city, size: 16),
-                    //   label: const Text('Refresh Location'),
-                    //   style: TextButton.styleFrom(
-                    //     foregroundColor: Colors.blue,
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
-
-            // Tickets list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: displayTickets.length,
-              itemBuilder: (context, index) {
-                return _buildResaleTicketCard(context, displayTickets[index]);
-              },
-            ),
-          ],
+  return Consumer<MovieCategoryProvider>(
+    builder: (context, categoryProvider, child) {
+      if (categoryProvider.isLoading) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(),
+          ),
         );
-      },
-    );
-  }
+      }
+
+      if (categoryProvider.error != null) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Text(
+                  'Error: ${categoryProvider.error}',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => categoryProvider.fetchCategories(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final categories = categoryProvider.activeCategories;
+
+      if (categories.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.category_outlined,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'No movie categories available',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Display only first 4 categories (for "See All" functionality)
+      final displayCategories = categories.take(4).toList();
+
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        itemCount: displayCategories.length,
+        itemBuilder: (context, index) {
+          return _buildCategoryTicketCard(context, displayCategories[index]);
+        },
+      );
+    },
+  );
+}
+
+
+
+Widget _buildCategoryTicketCard(BuildContext context, dynamic category) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ImageDetailScreen(
+            movieName: category.name,
+            categoryId: category.id,
+            assetImagePath: category.imageUrl,
+          ),
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Movie Category Poster
+          Container(
+            width: 60,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                category.imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: const Icon(
+                      Icons.movie,
+                      color: Colors.grey,
+                      size: 30,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Movie Category Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                
+                // Show tags/badges
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: category.tags.take(3).map<Widget>((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[600],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        tag,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+
+          // Arrow icon to indicate clickable
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: Colors.grey[600],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  // Build the nearby tickets section with location filtering
+  // Widget _buildNearbyTicketsSection() {
+  //   return Consumer<MovieTicketProvider>(
+  //     builder: (context, provider, child) {
+  //       if (provider.isLoading || _isLoadingLocation) {
+  //         return const Center(
+  //           child: Padding(
+  //             padding: EdgeInsets.all(20.0),
+  //             child: CircularProgressIndicator(),
+  //           ),
+  //         );
+  //       }
+
+  //       if (provider.error != null) {
+  //         return Center(
+  //           child: Padding(
+  //             padding: const EdgeInsets.all(20.0),
+  //             child: Column(
+  //               children: [
+  //                 Text(
+  //                   'Error: ${provider.error}',
+  //                   style: const TextStyle(color: Colors.red),
+  //                   textAlign: TextAlign.center,
+  //                 ),
+  //                 const SizedBox(height: 10),
+  //                 ElevatedButton(
+  //                   onPressed: () => provider.fetchAllTickets(),
+  //                   child: const Text('Retry'),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
+
+  //       // Use nearby tickets if location is available, otherwise show all tickets
+  //       List<MovieTicket> ticketsToShow = _userPosition != null
+  //           ? _nearbyTickets
+  //           : provider.tickets;
+
+  //       if (ticketsToShow.isEmpty) {
+  //         return Center(
+  //           child: Padding(
+  //             padding: const EdgeInsets.all(20.0),
+  //             child: Column(
+  //               children: [
+  //                 Icon(
+  //                   _userPosition != null
+  //                       ? Icons.location_off
+  //                       : Icons.movie_outlined,
+  //                   size: 48,
+  //                   color: Colors.grey,
+  //                 ),
+  //                 const SizedBox(height: 8),
+  //                 Text(
+  //                   _userPosition != null
+  //                       ? 'No tickets found within ${_maxDistanceKm.toInt()}km'
+  //                       : 'No tickets available',
+  //                   style: const TextStyle(fontSize: 16, color: Colors.grey),
+  //                 ),
+  //                 if (_userPosition != null) ...[
+  //                   const SizedBox(height: 8),
+  //                   TextButton(
+  //                     onPressed: () {
+  //                       setState(() {
+  //                         _maxDistanceKm = _maxDistanceKm == 10 ? 50 : 10;
+  //                       });
+  //                       _filterNearbyTickets();
+  //                     },
+  //                     child: Text(
+  //                       'Search within ${_maxDistanceKm == 10 ? 50 : 10}km instead',
+  //                       style: const TextStyle(color: Colors.blue),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
+
+  //       // Display only first 4 tickets (for "See All" functionality)
+  //       final displayTickets = ticketsToShow.take(4).toList();
+
+  //       return Column(
+  //         children: [
+  //           // Distance filter controls (optional)
+  //           if (_userPosition != null)
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 16.0,
+  //                 vertical: 8.0,
+  //               ),
+  //               child: Row(
+  //                 children: [
+  //                   // const Text('Within: '),
+  //                   // DropdownButton<double>(
+  //                   //   value: _maxDistanceKm,
+  //                   //   items: [5.0, 10.0, 25.0, 50.0].map((distance) {
+  //                   //     return DropdownMenuItem(
+  //                   //       value: distance,
+  //                   //       child: Text('${distance.toInt()}km'),
+  //                   //     );
+  //                   //   }).toList(),
+  //                   //   onChanged: (newDistance) {
+  //                   //     if (newDistance != null) {
+  //                   //       setState(() {
+  //                   //         _maxDistanceKm = newDistance;
+  //                   //       });
+  //                   //       _filterNearbyTickets();
+  //                   //     }
+  //                   //   },
+  //                   // ),
+  //                   const Spacer(),
+  //                   // TextButton.icon(
+  //                   //   onPressed: _getCurrentLocation,
+  //                   //   icon: const Icon(Icons.location_city, size: 16),
+  //                   //   label: const Text('Refresh Location'),
+  //                   //   style: TextButton.styleFrom(
+  //                   //     foregroundColor: Colors.blue,
+  //                   //   ),
+  //                   // ),
+  //                 ],
+  //               ),
+  //             ),
+
+  //           // Tickets list
+  //           ListView.builder(
+  //             shrinkWrap: true,
+  //             physics: const NeverScrollableScrollPhysics(),
+  //             padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  //             itemCount: displayTickets.length,
+  //             itemBuilder: (context, index) {
+  //               return _buildResaleTicketCard(context, displayTickets[index]);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   // Helper method to generate badges for movies
   List<String> _getBadgesForMovie(String movieName) {
@@ -2897,84 +3208,170 @@ class _MovieScreenState extends State<MovieScreen> {
     );
   }
 
+  // Widget _buildCategoryCard(String imageUrl, String title, List<String> tags) {
+  //   return Container(
+  //     width: 160,
+  //     margin: const EdgeInsets.only(right: 16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         // Category Image with Stack
+  //         Stack(
+  //           children: [
+  //             Container(
+  //               height: 220,
+  //               width: 160,
+  //               decoration: BoxDecoration(
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.black.withOpacity(0.2),
+  //                     spreadRadius: 1,
+  //                     blurRadius: 8,
+  //                     offset: const Offset(0, 4),
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: ClipRRect(
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 child: Image.network(
+  //                   imageUrl,
+  //                   fit: BoxFit.cover,
+  //                   loadingBuilder: (context, child, loadingProgress) {
+  //                     if (loadingProgress == null) return child;
+  //                     return Center(
+  //                       child: CircularProgressIndicator(
+  //                         value: loadingProgress.expectedTotalBytes != null
+  //                             ? loadingProgress.cumulativeBytesLoaded /
+  //                                   loadingProgress.expectedTotalBytes!
+  //                             : null,
+  //                       ),
+  //                     );
+  //                   },
+  //                   errorBuilder: (context, error, stackTrace) {
+  //                     return Container(
+  //                       color: Colors.grey[300],
+  //                       child: const Icon(
+  //                         Icons.movie,
+  //                         size: 40,
+  //                         color: Colors.grey,
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+
+  //         const SizedBox(height: 8),
+
+  //         // Category Title
+  //         Text(
+  //           title,
+  //           style: const TextStyle(
+  //             fontSize: 14,
+  //             fontWeight: FontWeight.w600,
+  //             color: Colors.black87,
+  //           ),
+  //           maxLines: 2,
+  //           textAlign: TextAlign.center,
+  //           overflow: TextOverflow.ellipsis,
+  //         ),
+
+  //         const SizedBox(height: 6),
+
+  //         // Tags Row - Show first 3 tags
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: tags.take(3).map((tag) => _buildBadge(tag)).toList(),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildCategoryCard(String imageUrl, String title, List<String> tags) {
     return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 16),
+      margin: const EdgeInsets.all(0), // Small margin for padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Category Image with Stack
-          Stack(
-            children: [
-              Container(
-                height: 220,
-                width: 160,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.movie,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.movie,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    );
+                  },
                 ),
               ),
-            ],
+            ),
           ),
 
           const SizedBox(height: 8),
 
           // Category Title
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
           ),
 
           const SizedBox(height: 6),
 
           // Tags Row - Show first 3 tags
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
             children: tags.take(3).map((tag) => _buildBadge(tag)).toList(),
           ),
+
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -3031,10 +3428,21 @@ class _MovieScreenState extends State<MovieScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NearbyTickets(),
+            builder: (context) => DetailScreen(
+              ticket: ticket,
+              image: ticket.ticketImageUrl,
+              noftickets: ticket.numberOfTickets.toString(),
+            ),
             settings: RouteSettings(arguments: ticket), // Pass ticket data
           ),
         );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => NearbyTickets(),
+        //     settings: RouteSettings(arguments: ticket), // Pass ticket data
+        //   ),
+        // );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -3120,20 +3528,37 @@ class _MovieScreenState extends State<MovieScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
+                  Text(
+                    '${ticket.language ?? "Tamil"}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 125, 125, 125),
+                    ),
+                  ),
+
+                  Text(
+                    '${_formatDate(ticket.showDate)} ${ticket.showTime}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
 
                   Text(
                     '${ticket.theatrePlace}',
                     style: const TextStyle(
                       fontSize: 16,
-                      color: Color.fromARGB(255, 40, 40, 40),
+                      color: Color.fromARGB(255, 154, 154, 154),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    '${_formatDate(ticket.showDate)} ${ticket.showTime}',
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
-                  ),
+
+                  // Text(
+                  //   'No of tickets: ${ticket.numberOfTickets}',
+                  //   style: const TextStyle(fontSize: 14, color: Colors.black),
+                  // ),
                   const SizedBox(height: 2),
 
                   // Add distance info

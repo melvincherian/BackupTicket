@@ -415,7 +415,8 @@ class BusTicket {
   final String? ticketImageUrl;
   final DateTime createdAt;
   final String sellerId;
-  final String status; // active, sold, cancelled
+  final String status;
+  final String?departuretime;
   
   BusTicket({
     this.id,
@@ -439,6 +440,7 @@ class BusTicket {
     this.ticketImageUrl,
     required this.createdAt,
     required this.sellerId,
+    this.departuretime,
     this.status = 'active',
   });
 
@@ -466,6 +468,7 @@ class BusTicket {
       'createdAt': Timestamp.fromDate(createdAt),
       'sellerId': sellerId,
       'status': status,
+      'departureTime':departuretime,
     };
   }
 
@@ -510,6 +513,7 @@ class BusTicket {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       sellerId: data['sellerId'] ?? '',
       status: data['status'] ?? 'active',
+      departuretime: data['departureTime']??''
     );
   }
 
@@ -537,6 +541,7 @@ class BusTicket {
     DateTime? createdAt,
     String? sellerId,
     String? status,
+    String?departureTime,
   }) {
     return BusTicket(
       id: id ?? this.id,
@@ -561,6 +566,7 @@ class BusTicket {
       createdAt: createdAt ?? this.createdAt,
       sellerId: sellerId ?? this.sellerId,
       status: status ?? this.status,
+      departuretime: departureTime??this.departuretime
     );
   }
 }

@@ -2350,6 +2350,7 @@
 
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/model/movie_category_model.dart';
+import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/provider/movie/movie_category_provider.dart';
 import 'package:backup_ticket/views/Details/detail_screen.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
@@ -2458,90 +2459,96 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Back button
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    // Location
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Row(
-                          //   children: const [
-                          //     Icon(Icons.location_on, color: Colors.white, size: 18),
-                          //     SizedBox(width: 5),
-                          //     Flexible(
-                          //       child: Text(
-                          //         "Hyderabad, Telangana",
-                          //         style: TextStyle(
-                          //           color: Colors.white,
-                          //           fontSize: 16,
-                          //           fontWeight: FontWeight.w600,
-                          //         ),
-                          //         overflow: TextOverflow.ellipsis,
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.person,
+                    // Left side (profile image and name)
+                    Row(
+                      children: [
+                        // Profile Image
+                        Consumer<UserProfileProvider>(
+                          builder: (context, profileProvider, child) {
+                            return CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: CircleAvatar(
+                                radius: 20,
+                                backgroundImage:
+                                    profileProvider.profileImageUrl != null &&
+                                        profileProvider
+                                            .profileImageUrl!
+                                            .isNotEmpty
+                                    ? NetworkImage(
+                                        profileProvider.profileImageUrl!,
+                                      )
+                                    : null,
+                                backgroundColor: Colors.grey[300],
+                                child:
+                                    profileProvider.profileImageUrl == null ||
+                                        profileProvider.profileImageUrl!.isEmpty
+                                    ? const Icon(
+                                        Icons.person,
+                                        color: Colors.grey,
+                                        size: 24,
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                        // Name
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Hello,",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            Text(
+                              _userName,
+                              style: const TextStyle(
                                 color: Colors.white,
-                                size: 18,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Hello, $_userName",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
                           ),
-                          // const SizedBox(height: 2),
-                          // const Text(
-                          //   "India",
-                          //   style: TextStyle(color: Colors.white70, fontSize: 12),
-                          // ),
                         ],
                       ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NotificationScreen(),
+                            ),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.black87,
+                          size: 22,
+                        ),
+                      ),
                     ),
-                    // Notification button
-                    // Container(
-                    //   padding: const EdgeInsets.all(8),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.white,
-                    //     shape: BoxShape.circle,
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black26,
-                    //         blurRadius: 4,
-                    //         offset: Offset(0, 2),
-                    //       ),
-                    //     ],
-                    //   ),
-                    //   child: GestureDetector(
-                    //     onTap: () {
-                    //       Navigator.push(
-                    //         context,
-                    //         MaterialPageRoute(
-                    //           builder: (context) => NotificationScreen(),
-                    //         ),
-                    //       );
-                    //     },
-                    //     child: const Icon(
-                    //       Icons.notifications_none,
-                    //       color: Colors.black87,
-                    //       size: 22,
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
@@ -2765,7 +2772,6 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                           color: Colors.grey,
                         ),
                       ),
-                     
                     ],
                   ),
                 ),
@@ -3005,7 +3011,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                   const SizedBox(width: 6),
                   Text(
                     '${ticket.showDate.day.toString().padLeft(2, '0')}/${ticket.showDate.month.toString().padLeft(2, '0')}/${ticket.showDate.year}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                    style: TextStyle(fontSize: 17, color: const Color.fromARGB(255, 0, 0, 0),fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 16),
                   Icon(
@@ -3016,7 +3022,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                   const SizedBox(width: 6),
                   Text(
                     ticket.showTime,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                    style: TextStyle(fontSize: 17, color: const Color.fromARGB(255, 0, 0, 0),fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -3039,6 +3045,20 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                 ],
               ),
               const SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Seat: ${ticket.seatNumbers[0].split(',')[0]}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
 
               // Seller info and total price
               Row(

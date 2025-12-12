@@ -5,7 +5,7 @@ class TicketPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color.fromARGB(255, 207, 207, 207)
+      ..color = Color(0xFFD7DCEA)
       ..style = PaintingStyle.fill;
 
     final shadowPaint = Paint()

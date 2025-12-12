@@ -388,35 +388,35 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
 
                     // Right side (notification) - currently commented out
                     // You can uncomment this if you want the notification icon back
-                    // Container(
-                    //   padding: const EdgeInsets.all(8),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.white,
-                    //     shape: BoxShape.circle,
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black26,
-                    //         blurRadius: 4,
-                    //         offset: Offset(0, 2),
-                    //       ),
-                    //     ],
-                    //   ),
-                    //   child: GestureDetector(
-                    //     onTap: () {
-                    //       Navigator.push(
-                    //         context,
-                    //         MaterialPageRoute(
-                    //           builder: (context) => NotificationScreen(),
-                    //         ),
-                    //       );
-                    //     },
-                    //     child: const Icon(
-                    //       Icons.notifications_none,
-                    //       color: Colors.black87,
-                    //       size: 22,
-                    //     ),
-                    //   ),
-                    // ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NotificationScreen(),
+                            ),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.black87,
+                          size: 22,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -427,7 +427,7 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1A237E), Color(0xFF0D47A1), Color(0xFF1976D2)],
+            colors: [Color.fromARGB(255, 235, 236, 244), Color.fromARGB(255, 224, 225, 244), Color.fromARGB(255, 224, 225, 244)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -604,24 +604,24 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
           },
         ),
 
-        //        SizedBox(height: 20,),
-        //         _AnimatedTicketCard(
-        //   delay: 200, // Slightly more delay to animate after bus card
-        //   gradient: const LinearGradient(
-        //     colors: [Color(0xFF43A047), Color(0xFF2E7D32)], // Greenish gradient for train
-        //     begin: Alignment.topLeft,
-        //     end: Alignment.bottomRight,
-        //   ),
-        //   icon: Icons.train, // Train icon
-        //   title: 'Train Tickets',
-        //   subtitle: 'Sell your train travel tickets',
-        //   onTap: () {
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(builder: (context) => TrainScreen()), // Create this screen
-        //     );
-        //   },
-        // ),
+               SizedBox(height: 20,),
+                _AnimatedTicketCard(
+          delay: 200, // Slightly more delay to animate after bus card
+          gradient: const LinearGradient(
+            colors: [Color(0xFF43A047), Color(0xFF2E7D32)], // Greenish gradient for train
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          icon: Icons.train, // Train icon
+          title: 'Train Tickets',
+          subtitle: 'Sell your train travel tickets',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => TrainScreen()), // Create this screen
+            );
+          },
+        ),
         const SizedBox(height: 20),
         // _buildInfoCard(),
       ],

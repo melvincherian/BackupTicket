@@ -1602,13 +1602,14 @@
 //   }
 // }
 
-
-
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/provider/selltickets/sell_movie_ticket_provider.dart';
 import 'package:backup_ticket/model/movie_ticket_model.dart';
+import 'package:backup_ticket/services/notification_service.dart';
 import 'package:backup_ticket/views/Details/qr_code_detail_screen.dart';
+import 'package:backup_ticket/views/auth/login_screen.dart';
+import 'package:backup_ticket/widget/payment_popup_widget.dart';
 import 'package:backup_ticket/widget/ticket_painter_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -1617,6 +1618,8 @@ import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class DetailScreen extends StatefulWidget {
+  final String? rows;
+  final String? noftickets;
   final String? image;
   final MovieTicket? ticket;
   final String? ticketId;
@@ -1627,6 +1630,8 @@ class DetailScreen extends StatefulWidget {
     this.ticket,
     this.ticketId,
     this.image,
+    this.noftickets,
+    this.rows,
     this.selectedQuantity = 1,
   });
 
@@ -1641,9 +1646,7 @@ class _DetailScreenState extends State<DetailScreen> {
   late int _purchaseQuantity; // ADD THIS
   late double _purchaseTotal;
 
-
-    String _userName = "Guest";
-
+  String _userName = "Guest";
 
   final paymentMethods = [
     {'name': 'Online Payment', 'icon': Icons.credit_card, 'value': 'Online'},
@@ -1659,12 +1662,15 @@ class _DetailScreenState extends State<DetailScreen> {
     _loadUserName();
     super.initState();
 
-
-    _purchaseQuantity = widget.selectedQuantity ?? 0;
+    _purchaseQuantity = widget.selectedQuantity ?? 1;
     if (widget.ticket != null) {
       _purchaseTotal =
           widget.ticket!.pricePerTicket * _purchaseQuantity; // ADD THIS
+    } else {
+      _purchaseTotal = 0.0;
     }
+
+    NotificationService().initialize();
     // Initialize Razorpay
     razorpay = Razorpay();
     razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentErrorResponse);
@@ -1672,8 +1678,7 @@ class _DetailScreenState extends State<DetailScreen> {
     razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWalletSelected);
   }
 
-
-     Future<void> _loadUserName() async {
+  Future<void> _loadUserName() async {
     final name = await UserPreferences.getName();
     if (mounted && name != null && name.isNotEmpty) {
       setState(() {
@@ -1700,6 +1705,10 @@ class _DetailScreenState extends State<DetailScreen> {
     try {
       print('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy');
       await _processTicketPurchase(response.paymentId);
+
+      //   if (mounted) {
+      //   _showPaymentPopup(context);
+      // }
     } catch (e) {
       setState(() {
         _isProcessingOrder = false;
@@ -1720,7 +1729,7 @@ class _DetailScreenState extends State<DetailScreen> {
       'amount': (_purchaseTotal * 100).toInt(),
       'name': 'Movie Ticket App',
       'description':
-          'Movie Ticket Purchase - ${ticket.movieName} ($_purchaseQuantity tickets)', 
+          'Movie Ticket Purchase - ${ticket.movieName} ($_purchaseQuantity tickets)',
       'send_sms_hash': true,
       'prefill': {
         'contact': "9961593179", // Get from user profile
@@ -1812,6 +1821,17 @@ class _DetailScreenState extends State<DetailScreen> {
   //   }
   // }
 
+  //   void _showPaymentPopup(BuildContext context) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (BuildContext context) {
+  //       return const PaymentPopup();
+  //     },
+  //   );
+  // }
+
   Future<void> _processTicketPurchase(String? paymentId) async {
     try {
       final provider = Provider.of<MovieTicketProvider>(context, listen: false);
@@ -1836,24 +1856,29 @@ class _DetailScreenState extends State<DetailScreen> {
       }
 
       final userId = await UserPreferences.getUserId();
+      final paymentMethodName = paymentMethods[_selectedPaymentMethod!]['value']
+          .toString();
 
-      await FirebaseFirestore.instance.collection('orders').add({
-        'userId': userId ?? 'guest',
-        'movieName': currentTicket.movieName,
-        'theatrePlace': currentTicket.theatrePlace,
-        'showDate': currentTicket.showDate.toString(),
-        'showTime': currentTicket.showTime,
-        'numberOfTickets': _purchaseQuantity, // CHANGE THIS LINE
-        'totalPrice': _purchaseTotal, // CHANGE THIS LINE
-        'paymentMethod': paymentMethods[_selectedPaymentMethod!]['value'],
-        'paymentId': paymentId ?? 'COD',
-        'status': 'confirmed',
-        'createdAt': FieldValue.serverTimestamp(),
-        'qrCodeImageUrl': currentTicket.qrCodeImageUrl,
-        'ticketImageUrl': currentTicket.ticketImageUrl,
-      });
+      // Save order to Firestore
+      DocumentReference orderRef = await FirebaseFirestore.instance
+          .collection('orders')
+          .add({
+            'userId': userId ?? 'guest',
+            'movieName': currentTicket.movieName,
+            'theatrePlace': currentTicket.theatrePlace,
+            'showDate': currentTicket.showDate.toString(),
+            'showTime': currentTicket.showTime,
+            'numberOfTickets': _purchaseQuantity,
+            'totalPrice': _purchaseTotal,
+            'paymentMethod': paymentMethodName,
+            'paymentId': paymentId ?? 'COD',
+            'status': 'confirmed',
+            'createdAt': FieldValue.serverTimestamp(),
+            'qrCodeImageUrl': currentTicket.qrCodeImageUrl,
+            'ticketImageUrl': currentTicket.ticketImageUrl,
+          });
 
-      // ADD THIS: Update ticket quantity in database
+      // Update ticket quantity in database
       final remainingTickets =
           currentTicket.numberOfTickets - _purchaseQuantity;
       if (remainingTickets > 0) {
@@ -1865,20 +1890,39 @@ class _DetailScreenState extends State<DetailScreen> {
         await provider.deleteTicket(currentTicket.id!);
       }
 
+      // Show local notification
+      await NotificationService().showTicketPurchaseNotification(
+        movieName: currentTicket.movieName,
+        numberOfTickets: _purchaseQuantity,
+        totalPrice: _purchaseTotal,
+        paymentMethod: paymentMethodName,
+      );
+
+      // Save notification to Firestore for notification history
+      await NotificationService().saveNotificationToFirestore(
+        userId: userId ?? 'guest',
+        title: 'Ticket Purchase Successful! 🎉',
+        message:
+            'Your $_purchaseQuantity ticket(s) for "${currentTicket.movieName}" has been confirmed. Total: ₹$_purchaseTotal via $paymentMethodName',
+        type: 'purchase',
+        ticketId: orderRef.id,
+        imageUrl: currentTicket.ticketImageUrl,
+      );
+
       if (_selectedPaymentMethod == 1) {
         _showLoadingDialog();
       }
 
-      String paymentMethod = paymentMethods[_selectedPaymentMethod!]['value']
-          .toString();
       await Future.delayed(Duration(seconds: 2));
+
+      // _showPaymentPopup(context);
 
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
 
       _showSuccessSnackBar('Ticket purchased successfully!');
-      _navigateToSuccessScreen(currentTicket, paymentMethod, paymentId);
+      _navigateToSuccessScreen(currentTicket, paymentMethodName, paymentId);
     } catch (e) {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -1889,6 +1933,84 @@ class _DetailScreenState extends State<DetailScreen> {
       });
     }
   }
+
+  // Future<void> _processTicketPurchase(String? paymentId) async {
+  //   try {
+  //     final provider = Provider.of<MovieTicketProvider>(context, listen: false);
+
+  //     MovieTicket? currentTicket = widget.ticket;
+  //     if (currentTicket == null && widget.ticketId != null) {
+  //       try {
+  //         currentTicket = provider.tickets.firstWhere(
+  //           (t) => t.id == widget.ticketId,
+  //         );
+  //       } catch (e) {
+  //         currentTicket = null;
+  //       }
+  //     }
+
+  //     if (currentTicket == null) {
+  //       _showErrorSnackBar('Invalid ticket data');
+  //       setState(() {
+  //         _isProcessingOrder = false;
+  //       });
+  //       return;
+  //     }
+
+  //     final userId = await UserPreferences.getUserId();
+
+  //     await FirebaseFirestore.instance.collection('orders').add({
+  //       'userId': userId ?? 'guest',
+  //       'movieName': currentTicket.movieName,
+  //       'theatrePlace': currentTicket.theatrePlace,
+  //       'showDate': currentTicket.showDate.toString(),
+  //       'showTime': currentTicket.showTime,
+  //       'numberOfTickets': _purchaseQuantity, // CHANGE THIS LINE
+  //       'totalPrice': _purchaseTotal, // CHANGE THIS LINE
+  //       'paymentMethod': paymentMethods[_selectedPaymentMethod!]['value'],
+  //       'paymentId': paymentId ?? 'COD',
+  //       'status': 'confirmed',
+  //       'createdAt': FieldValue.serverTimestamp(),
+  //       'qrCodeImageUrl': currentTicket.qrCodeImageUrl,
+  //       'ticketImageUrl': currentTicket.ticketImageUrl,
+  //     });
+
+  //     // ADD THIS: Update ticket quantity in database
+  //     final remainingTickets =
+  //         currentTicket.numberOfTickets - _purchaseQuantity;
+  //     if (remainingTickets > 0) {
+  //       await provider.updateTicketQuantity(
+  //         currentTicket.id!,
+  //         remainingTickets,
+  //       );
+  //     } else {
+  //       await provider.deleteTicket(currentTicket.id!);
+  //     }
+
+  //     if (_selectedPaymentMethod == 1) {
+  //       _showLoadingDialog();
+  //     }
+
+  //     String paymentMethod = paymentMethods[_selectedPaymentMethod!]['value']
+  //         .toString();
+  //     await Future.delayed(Duration(seconds: 2));
+
+  //     if (Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
+
+  //     _showSuccessSnackBar('Ticket purchased successfully!');
+  //     _navigateToSuccessScreen(currentTicket, paymentMethod, paymentId);
+  //   } catch (e) {
+  //     if (Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
+  //     _showErrorSnackBar('An error occurred while purchasing the ticket');
+  //     setState(() {
+  //       _isProcessingOrder = false;
+  //     });
+  //   }
+  // }
   // Navigate to success screen
   // void _navigateToSuccessScreen(
   //   MovieTicket ticket,
@@ -1944,16 +2066,76 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  Future<bool> _isUserLoggedIn() async {
+    final userId = await UserPreferences.getUserId();
+    return userId != null && userId != 'guest';
+  }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Login Required',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Please login to continue with the purchase.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A6CF7),
+              ),
+              child: const Text('Login', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Also add this import at the top of your DetailScreen file:
   // import 'qr_code_detail_screen.dart'; // Adjust path as needed
 
   // Method to directly initiate Razorpay payment (skip payment method selection)
-  void _directRazorpayPayment(MovieTicket ticket) {
+  // void _directRazorpayPayment(MovieTicket ticket) {
+  //   if (_isProcessingOrder) return;
+
+  //   setState(() {
+  //     _isProcessingOrder = true;
+  //     _selectedPaymentMethod = 0; // Set to online payment
+  //   });
+
+  //   _initiateRazorpayPayment(ticket);
+  // }
+
+  void _directRazorpayPayment(MovieTicket ticket) async {
     if (_isProcessingOrder) return;
+
+    // Check if user is logged in
+    bool isLoggedIn = await _isUserLoggedIn();
+    if (!isLoggedIn) {
+      _showLoginDialog();
+      return;
+    }
 
     setState(() {
       _isProcessingOrder = true;
-      _selectedPaymentMethod = 0; // Set to online payment
+      _selectedPaymentMethod = 0;
     });
 
     _initiateRazorpayPayment(ticket);
@@ -2379,66 +2561,69 @@ class _DetailScreenState extends State<DetailScreen> {
                         //     ),
                         //   ],
                         // ),
-
-                         Row(
-                      children: [
-                        // Profile Image
-                        Consumer<UserProfileProvider>(
-                          builder: (context, profileProvider, child) {
-                            return CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white,
-                              child: CircleAvatar(
-                                radius: 20,
-                                backgroundImage:
-                                    profileProvider.profileImageUrl != null &&
-                                        profileProvider
-                                            .profileImageUrl!
-                                            .isNotEmpty
-                                    ? NetworkImage(
-                                        profileProvider.profileImageUrl!,
-                                      )
-                                    : null,
-                                backgroundColor: Colors.grey[300],
-                                child:
-                                    profileProvider.profileImageUrl == null ||
-                                        profileProvider.profileImageUrl!.isEmpty
-                                    ? const Icon(
-                                        Icons.person,
-                                        color: Colors.grey,
-                                        size: 24,
-                                      )
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        // Name
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Row(
                           children: [
-                            const Text(
-                              "Hello,",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
+                            // Profile Image
+                            Consumer<UserProfileProvider>(
+                              builder: (context, profileProvider, child) {
+                                return CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: Colors.white,
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundImage:
+                                        profileProvider.profileImageUrl !=
+                                                null &&
+                                            profileProvider
+                                                .profileImageUrl!
+                                                .isNotEmpty
+                                        ? NetworkImage(
+                                            profileProvider.profileImageUrl!,
+                                          )
+                                        : null,
+                                    backgroundColor: Colors.grey[300],
+                                    child:
+                                        profileProvider.profileImageUrl ==
+                                                null ||
+                                            profileProvider
+                                                .profileImageUrl!
+                                                .isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            color: Colors.grey,
+                                            size: 24,
+                                          )
+                                        : null,
+                                  ),
+                                );
+                              },
                             ),
-                            Text(
-                              _userName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            const SizedBox(width: 12),
+                            // Name
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "Hello,",
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                Text(
+                                  _userName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
                         // SizedBox(height: 2),
                         // const Text(
                         //   "       Hyderabad, Telangana, India",
@@ -2576,6 +2761,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   child: Column(
                     children: [
                       Container(
+                        height: 660,
                         width: double.infinity,
                         child: CustomPaint(
                           painter: TicketPainter(),
@@ -2749,15 +2935,27 @@ class _DetailScreenState extends State<DetailScreen> {
                                     //   'No of tickets:',
                                     //   '${currentTicket.numberOfTickets?.toString() ?? '0'}',
                                     // ),
+                                    // _buildDetailRow(
+                                    //   'No of tickets:',
+                                    //   '$_purchaseQuantity', // CHANGE THIS LINE
+                                    // ),
                                     _buildDetailRow(
                                       'No of tickets:',
-                                      '$_purchaseQuantity', // CHANGE THIS LINE
+                                      '${_purchaseQuantity != null && _purchaseQuantity! > 0 ? _purchaseQuantity : (widget.noftickets ?? 0)}',
                                     ),
 
-                                    // _buildDetailRow(
-                                    //   'Total Price:',
-                                    //   '₹${currentTicket.totalPrice?.toString() ?? '0'}',
-                                    // ),
+                                    _buildDetailRow(
+                                      'Row:',
+                                      currentTicket.seatNumbers[0].split(
+                                        ',',
+                                      )[0], // Shows only "Row E"
+                                    ),
+
+                                     _buildDetailRow(
+                                      'Language:',
+                                      '${currentTicket.language}', // CHANGE THIS LINE
+                                    ),
+
                                     _buildDetailRow(
                                       'Total Price:',
                                       '₹${_purchaseTotal.toStringAsFixed(0)}', // CHANGE THIS LINE
@@ -2775,9 +2973,73 @@ class _DetailScreenState extends State<DetailScreen> {
                       const SizedBox(height: 30),
 
                       // Buy Now button - Updated to show payment method selection
+                      // Container(
+                      //   width: double.infinity,
+                      //   height: 55,
+                      //   child: ElevatedButton(
+                      //     onPressed: _isProcessingOrder
+                      //         ? null
+                      //         : () {
+                      //             if (currentTicket != null) {
+                      //               _directRazorpayPayment(currentTicket);
+                      //             }
+                      //           },
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: _isProcessingOrder
+                      //           ? Colors.grey
+                      //           : const Color(0xFF1976D2),
+                      //       shape: RoundedRectangleBorder(
+                      //         borderRadius: BorderRadius.circular(15),
+                      //       ),
+                      //       elevation: 3,
+                      //     ),
+                      //     child: _isProcessingOrder
+                      //         ? Row(
+                      //             mainAxisAlignment: MainAxisAlignment.center,
+                      //             children: [
+                      //               SizedBox(
+                      //                 width: 20,
+                      //                 height: 20,
+                      //                 child: CircularProgressIndicator(
+                      //                   strokeWidth: 2,
+                      //                   valueColor:
+                      //                       AlwaysStoppedAnimation<Color>(
+                      //                         Colors.white,
+                      //                       ),
+                      //                 ),
+                      //               ),
+                      //               SizedBox(width: 12),
+                      //               Text(
+                      //                 'Processing...',
+                      //                 style: TextStyle(
+                      //                   color: Colors.white,
+                      //                   fontSize: 18,
+                      //                   fontWeight: FontWeight.w600,
+                      //                 ),
+                      //               ),
+                      //             ],
+                      //           )
+                      //         : const Text(
+                      //             'Buy Now',
+                      //             style: TextStyle(
+                      //               color: Colors.white,
+                      //               fontSize: 18,
+                      //               fontWeight: FontWeight.w600,
+                      //             ),
+                      //           ),
+                      //   ),
+                      // ),
                       Container(
                         width: double.infinity,
                         height: 55,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF214194), Color(0xFF3F7EF3)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                        ),
                         child: ElevatedButton(
                           onPressed: _isProcessingOrder
                               ? null
@@ -2787,13 +3049,11 @@ class _DetailScreenState extends State<DetailScreen> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _isProcessingOrder
-                                ? Colors.grey
-                                : const Color(0xFF1976D2),
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            elevation: 3,
                           ),
                           child: _isProcessingOrder
                               ? Row(

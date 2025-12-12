@@ -1466,7 +1466,7 @@ class BusTicketProvider with ChangeNotifier {
       _selectedImagePath = null;
       _selectedImageFile = null;
       _setLoading(false);
-      
+       
       return true;
     } catch (e) {
       _setLoading(false);

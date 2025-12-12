@@ -212,7 +212,8 @@ import 'package:backup_ticket/views/navbar/navbar_screen.dart';
 import 'package:flutter/material.dart';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key});
+  final String?number;
+  const OtpScreen({super.key,this.number});
  
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -351,8 +352,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           const SizedBox(height: 8),
                           
                           // Phone number
-                          const Text(
-                            '123xxxxxx1233',
+                           Text(
+                        '${widget.number}',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.black,

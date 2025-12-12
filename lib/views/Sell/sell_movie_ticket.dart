@@ -1933,6 +1933,7 @@ import 'dart:ui' as ui;
 import 'package:backup_ticket/model/movie_ticket_model.dart';
 import 'package:backup_ticket/provider/movie/movie_category_provider.dart';
 import 'package:backup_ticket/provider/selltickets/sell_movie_ticket_provider.dart';
+import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -2057,6 +2058,58 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
       ).fetchCategories();
     });
   }
+
+
+
+  Future<bool> _isUserLoggedIn() async {
+  final userId = await UserPreferences.getUserId();
+  return userId != null && userId != 'guest';
+}
+
+
+
+
+void _showLoginDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          'Login Required',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Please login to sell tickets. Guest users cannot sell tickets.',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF214194),
+            ),
+            child: const Text(
+              'Login',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> _loadUserData() async {
     final name = await UserPreferences.getName();
@@ -2499,6 +2552,11 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
   }
 
   Future<void> _submitForm() async {
+      bool isLoggedIn = await _isUserLoggedIn();
+  if (!isLoggedIn) {
+    _showLoginDialog();
+    return;
+  }
     if (!_formKey.currentState!.validate()) return;
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2581,7 +2639,7 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
         fullName: _fullNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         email: _emailController.text.trim(),
-        gender: _selectedGender ?? '',
+        // gender: _selectedGender ?? '',
         movieName: _selectedMovieName!,
         theatrePlace: _theatrePlaceController.text.trim(),
         showDate: _selectedDate!,
@@ -2622,7 +2680,7 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
       if (ticketId != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Movie ticket submitted successfully!'),
+            content: Text('Thanks for uploaded your ticket our team will check and notify you once get uploaded'),
             backgroundColor: Colors.green,
           ),
         );
@@ -2702,17 +2760,17 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
                     required: true,
                   ),
                   const SizedBox(height: 16),
-                  _buildDropdownField(
-                    'Gender',
-                    'Select Gender',
-                    ['Male', 'Female', 'Other'],
-                    _selectedGender,
-                    (value) {
-                      setState(() {
-                        _selectedGender = value;
-                      });
-                    },
-                  ),
+                  // _buildDropdownField(
+                  //   'Gender',
+                  //   'Select Gender',
+                  //   ['Male', 'Female', 'Other'],
+                  //   _selectedGender,
+                  //   (value) {
+                  //     setState(() {
+                  //       _selectedGender = value;
+                  //     });
+                  //   },
+                  // ),
                   const SizedBox(height: 16),
                   categoryProvider.isLoading
                       ? const Center(
@@ -2834,7 +2892,23 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
                     },
                     required: true,
                   ),
-                  const SizedBox(height: 16),
+                  // const SizedBox(height: 16),
+
+                   const SizedBox(height: 16),
+
+                  if (_selectedCategory != null)
+                    _buildDropdownField(
+                      'Ticket Type',
+                      'Select ticket type',
+                      ticketCategories[_selectedCategory]!,
+                      _selectedTicketType,
+                      (value) {
+                        setState(() {
+                          _selectedTicketType = value;
+                        });
+                      },
+                      required: true,
+                    ),
 
                   const SizedBox(height: 16),
                   _buildDropdownField(
@@ -2852,21 +2926,7 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
                   ),
                   const SizedBox(height: 16),
                   _buildSeatSelectionField(),
-                  const SizedBox(height: 16),
-
-                  if (_selectedCategory != null)
-                    _buildDropdownField(
-                      'Ticket Type',
-                      'Select ticket type',
-                      ticketCategories[_selectedCategory]!,
-                      _selectedTicketType,
-                      (value) {
-                        setState(() {
-                          _selectedTicketType = value;
-                        });
-                      },
-                      required: true,
-                    ),
+                 
                   const SizedBox(height: 16),
                   _buildTextField(
                     'Price per Ticket',

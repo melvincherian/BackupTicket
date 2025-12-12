@@ -1143,30 +1143,18 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:backup_ticket/views/deleteaccount/delete_account.dart';
 import 'package:backup_ticket/views/movies/create_movie.dart';
+import 'package:backup_ticket/views/notifications/notification_screen.dart';
 import 'package:backup_ticket/views/postedtickets/posted_tickets.dart';
 import 'package:backup_ticket/views/privacy/help_screen.dart';
+import 'package:backup_ticket/views/privacy/terms_conditions.dart';
 import 'package:backup_ticket/views/profile/my_profile.dart';
 import 'package:backup_ticket/views/purchasedtickets/purchased_tickets.dart';
+import 'package:backup_ticket/views/referearn/refer_earn_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1203,10 +1191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     try {
-      if (!await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      )) {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1284,6 +1269,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Widget _buildProfileImage(String? profileImageUrl) {
+  //   return Stack(
+  //     children: [
+  //       Container(
+  //         width: 80,
+  //         height: 80,
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(12),
+  //           border: Border.all(color: Colors.white, width: 2),
+  //         ),
+  //         child: ClipRRect(
+  //           borderRadius: BorderRadius.circular(10),
+  //           child: profileImageUrl != null && profileImageUrl.isNotEmpty
+  //               ? Image.network(
+  //                   profileImageUrl,
+  //                   fit: BoxFit.cover,
+  //                   loadingBuilder: (context, child, loadingProgress) {
+  //                     if (loadingProgress == null) return child;
+  //                     return Container(
+  //                       color: Colors.grey[300],
+  //                       child: Center(
+  //                         child: CircularProgressIndicator(
+  //                           value: loadingProgress.expectedTotalBytes != null
+  //                               ? loadingProgress.cumulativeBytesLoaded /
+  //                                     loadingProgress.expectedTotalBytes!
+  //                               : null,
+  //                           strokeWidth: 2,
+  //                           valueColor: const AlwaysStoppedAnimation<Color>(
+  //                             Colors.white,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                   errorBuilder: (context, error, stackTrace) {
+  //                     return Image.asset(
+  //                       'assets/profileimage.png',
+  //                       fit: BoxFit.cover,
+  //                     );
+  //                   },
+  //                 )
+  //               : Image.asset(
+  //                   'assets/profileimage.png',
+  //                   fit: BoxFit.cover,
+  //                   errorBuilder: (context, error, stackTrace) {
+  //                     return Container(
+  //                       color: Colors.grey[300],
+  //                       child: const Icon(
+  //                         Icons.person,
+  //                         size: 40,
+  //                         color: Colors.grey,
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //         ),
+  //       ),
+  //       Positioned(
+  //         bottom: -2,
+  //         right: -2,
+  //         child: Container(
+  //           width: 24,
+  //           height: 24,
+  //           decoration: const BoxDecoration(
+  //             color: Colors.white,
+  //             shape: BoxShape.circle,
+  //           ),
+  //           child: const Icon(Icons.edit, size: 14, color: Colors.black),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildProfileImage(String? profileImageUrl) {
     return Stack(
       children: [
@@ -1296,38 +1355,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: profileImageUrl != null && profileImageUrl.isNotEmpty
+            child: (profileImageUrl != null && profileImageUrl.isNotEmpty)
                 ? Image.network(
                     profileImageUrl,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
-                      return Container(
-                        color: Colors.grey[300],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                : null,
-                            strokeWidth: 2,
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                              : null,
+                          strokeWidth: 2,
                         ),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        'assets/profileimage.png',
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  )
-                : Image.asset(
-                    'assets/profileimage.png',
-                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: Colors.grey[300],
@@ -1338,9 +1381,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       );
                     },
+                  )
+                : Container(
+                    color: Colors.grey[300],
+                    child: const Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
                   ),
           ),
         ),
+
+        /// Edit icon
         Positioned(
           bottom: -2,
           right: -2,
@@ -1497,20 +1550,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
 
-                          // _buildMenuItem(
-                          //   icon: Icons.movie,
-                          //   iconColor: const Color(0xFF06B6D4),
-                          //   title: 'Movies',
-                          //   onTap: () {
-                          //     Navigator.push(
-                          //       context,
-                          //       MaterialPageRoute(
-                          //         builder: (context) => const CreateMovie(),
-                          //       ),
-                          //     );
-                          //   },
-                          // ),
+                          _buildMenuItem(
+                            icon: Icons.notification_add,
+                            iconColor: const Color.fromARGB(255, 6, 212, 51),
+                            title: 'Notifications',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationScreen(),
+                                ),
+                              );
+                            },
+                          ),
 
+                          _buildMenuItem(
+                            icon: Icons.movie,
+                            iconColor: const Color(0xFF06B6D4),
+                            title: 'Movies',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CreateMovie(),
+                                ),
+                              );
+                            },
+                          ),
                           const SizedBox(height: 24),
 
                           // Support & Settings section
@@ -1534,7 +1601,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             iconColor: const Color(0xFFF59E0B),
                             title: 'Privacy Policy',
                             onTap: () {
-                              _launchURL('https://backupticket-f3cc6.web.app/privacy-policy');
+                              _launchURL(
+                                'https://backupticket-f3cc6.web.app/privacy-policy',
+                              );
                             },
                           ),
 
@@ -1543,7 +1612,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             iconColor: const Color(0xFF06B6D4),
                             title: 'About Us',
                             onTap: () {
-                              _launchURL('https://backupticket-f3cc6.web.app/about');
+                              _launchURL(
+                                'https://backupticket-f3cc6.web.app/about',
+                              );
                             },
                           ),
 
@@ -1561,6 +1632,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
 
+                          // _buildMenuItem(
+                          //   icon: Icons.description,
+                          //   iconColor: const Color.fromARGB(255, 241, 11, 245),
+                          //   title: 'Terms & Conditions',
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) =>TermsConditions(),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
+
+                            _buildMenuItem(
+                            icon: Icons.card_giftcard,
+                            iconColor: const Color(0xFFF59E0B),
+                            title: 'Refer & Earn',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ReferEarnScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           _buildMenuItem(
                             icon: Icons.help_outline,
                             iconColor: const Color(0xFF4A90E2),

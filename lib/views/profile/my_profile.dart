@@ -5,7 +5,6 @@
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 
-
 // class MyProfile extends StatefulWidget {
 //   const MyProfile({super.key});
 
@@ -37,12 +36,12 @@
 //     try {
 //       // Get userId from SharedPreferences
 //       String? userId = await UserPreferences.getUserId();
-      
+
 //       if (userId != null && userId.isNotEmpty) {
 //         if (mounted) {
 //           final profileProvider = Provider.of<UserProfileProvider>(context, listen: false);
 //           await profileProvider.loadUserProfile(userId);
-          
+
 //           // Update controllers with loaded data
 //           if (profileProvider.name != null && profileProvider.name!.isNotEmpty) {
 //             _nameController.text = profileProvider.name!;
@@ -351,20 +350,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ignore_for_file: deprecated_member_use
 
 import 'dart:io';
@@ -389,7 +374,7 @@ class _MyProfileState extends State<MyProfile> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  
+
   File? _selectedImageFile;
   Uint8List? _selectedImageBytes;
   String? _currentProfileImageUrl;
@@ -412,22 +397,29 @@ class _MyProfileState extends State<MyProfile> {
   Future<void> _loadUserProfile() async {
     try {
       String? userId = await UserPreferences.getUserId();
-      
+
       if (userId != null && userId.isNotEmpty) {
         if (mounted) {
-          final profileProvider = Provider.of<UserProfileProvider>(context, listen: false);
+          final profileProvider = Provider.of<UserProfileProvider>(
+            context,
+            listen: false,
+          );
           await profileProvider.loadUserProfile(userId);
-          
-          if (profileProvider.name != null && profileProvider.name!.isNotEmpty) {
+
+          if (profileProvider.name != null &&
+              profileProvider.name!.isNotEmpty) {
             _nameController.text = profileProvider.name!;
           }
-          if (profileProvider.phoneNumber != null && profileProvider.phoneNumber!.isNotEmpty) {
+          if (profileProvider.phoneNumber != null &&
+              profileProvider.phoneNumber!.isNotEmpty) {
             _phoneController.text = profileProvider.phoneNumber!;
           }
-          if (profileProvider.email != null && profileProvider.email!.isNotEmpty) {
+          if (profileProvider.email != null &&
+              profileProvider.email!.isNotEmpty) {
             _emailController.text = profileProvider.email!;
           }
-          if (profileProvider.profileImageUrl != null && profileProvider.profileImageUrl!.isNotEmpty) {
+          if (profileProvider.profileImageUrl != null &&
+              profileProvider.profileImageUrl!.isNotEmpty) {
             setState(() {
               _currentProfileImageUrl = profileProvider.profileImageUrl;
             });
@@ -531,7 +523,10 @@ class _MyProfileState extends State<MyProfile> {
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       try {
-        final profileProvider = Provider.of<UserProfileProvider>(context, listen: false);
+        final profileProvider = Provider.of<UserProfileProvider>(
+          context,
+          listen: false,
+        );
         String? userId = await UserPreferences.getUserId();
         String? profileImageUrl = _currentProfileImageUrl;
 
@@ -540,9 +535,9 @@ class _MyProfileState extends State<MyProfile> {
           final uploadedUrl = await _uploadImageToCloudinary();
           if (uploadedUrl != null) {
             profileImageUrl = uploadedUrl;
-            
+
             // Delete old image from Cloudinary if exists
-            if (_currentProfileImageUrl != null && 
+            if (_currentProfileImageUrl != null &&
                 _currentProfileImageUrl!.isNotEmpty &&
                 _currentProfileImageUrl != uploadedUrl) {
               await CloudinaryService.deleteImage(_currentProfileImageUrl!);
@@ -551,7 +546,9 @@ class _MyProfileState extends State<MyProfile> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Failed to upload image. Profile will be saved without new image.'),
+                  content: Text(
+                    'Failed to upload image. Profile will be saved without new image.',
+                  ),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -652,11 +649,7 @@ class _MyProfileState extends State<MyProfile> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                  : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
             ),
           ),
         ),
@@ -665,20 +658,19 @@ class _MyProfileState extends State<MyProfile> {
   }
 
   Widget _buildImageWidget() {
-    // Show selected image (priority)
+    // 1️⃣ Show selected memory image
     if (_selectedImageBytes != null) {
-      return Image.memory(
-        _selectedImageBytes!,
-        fit: BoxFit.cover,
-      );
-    } else if (_selectedImageFile != null) {
-      return Image.file(
-        _selectedImageFile!,
-        fit: BoxFit.cover,
-      );
+      return Image.memory(_selectedImageBytes!, fit: BoxFit.cover);
     }
-    // Show current profile image
-    else if (_currentProfileImageUrl != null && _currentProfileImageUrl!.isNotEmpty) {
+
+    // 2️⃣ Show selected file image
+    if (_selectedImageFile != null) {
+      return Image.file(_selectedImageFile!, fit: BoxFit.cover);
+    }
+
+    // 3️⃣ Show current profile image (network)
+    if (_currentProfileImageUrl != null &&
+        _currentProfileImageUrl!.isNotEmpty) {
       return Image.network(
         _currentProfileImageUrl!,
         fit: BoxFit.cover,
@@ -687,26 +679,28 @@ class _MyProfileState extends State<MyProfile> {
           return Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
                   : null,
+              strokeWidth: 2,
             ),
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/profileimage.png',
-            fit: BoxFit.cover,
-          );
+          return _defaultPersonIcon();
         },
       );
     }
-    // Show default image
-    else {
-      return Image.asset(
-        'assets/profileimage.png',
-        fit: BoxFit.cover,
-      );
-    }
+
+    // 4️⃣ Show person icon by default
+    return _defaultPersonIcon();
+  }
+
+  Widget _defaultPersonIcon() {
+    return Container(
+      color: Colors.grey[300],
+      child: const Icon(Icons.person, size: 40, color: Colors.grey),
+    );
   }
 
   String? _validateName(String? value) {
@@ -776,9 +770,7 @@ class _MyProfileState extends State<MyProfile> {
                     const SizedBox(height: 20),
 
                     if (profileProvider.isLoading) ...[
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      const Center(child: CircularProgressIndicator()),
                       const SizedBox(height: 20),
                     ],
 
@@ -829,10 +821,12 @@ class _MyProfileState extends State<MyProfile> {
                     TextFormField(
                       controller: _phoneController,
                       validator: _validatePhone,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         labelText: 'Phone Number',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.phone),
+                        suffixIcon: Icon(Icons.lock),
                       ),
                       keyboardType: TextInputType.phone,
                     ),
@@ -841,10 +835,12 @@ class _MyProfileState extends State<MyProfile> {
                     TextFormField(
                       controller: _emailController,
                       validator: _validateEmail,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.email),
+                        suffixIcon: Icon(Icons.lock),
                       ),
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -854,28 +850,43 @@ class _MyProfileState extends State<MyProfile> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: (profileProvider.isUpdating || _isUploadingImage) 
-                            ? null 
+                        onPressed:
+                            (profileProvider.isUpdating || _isUploadingImage)
+                            ? null
                             : _handleSave,
                         style: ButtonStyle(
-                          shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8))),
-                          padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-                          backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          padding: MaterialStateProperty.all(
+                            const EdgeInsets.all(0),
+                          ),
+                          backgroundColor: MaterialStateProperty.all(
+                            Colors.transparent,
+                          ),
                           elevation: MaterialStateProperty.all(0),
                         ),
                         child: Ink(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: (profileProvider.isUpdating || _isUploadingImage)
+                              colors:
+                                  (profileProvider.isUpdating ||
+                                      _isUploadingImage)
                                   ? [Colors.grey.shade400, Colors.grey.shade500]
-                                  : [const Color(0xFF214194), const Color(0xFF4C7EFF)],
+                                  : [
+                                      const Color(0xFF214194),
+                                      const Color(0xFF4C7EFF),
+                                    ],
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Container(
                             alignment: Alignment.center,
-                            child: (profileProvider.isUpdating || _isUploadingImage)
+                            child:
+                                (profileProvider.isUpdating ||
+                                    _isUploadingImage)
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
@@ -886,7 +897,10 @@ class _MyProfileState extends State<MyProfile> {
                                   )
                                 : const Text(
                                     'Save',
-                                    style: TextStyle(fontSize: 16, color: Colors.white),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                           ),
                         ),

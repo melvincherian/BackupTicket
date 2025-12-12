@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/model/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -134,50 +137,86 @@ class AuthProvider extends ChangeNotifier {
 
 
 
+String _hashPassword(String password) {
+  var bytes = utf8.encode(password);
+  var digest = sha256.convert(bytes);
+  return digest.toString();
+}
 
 
 
-
-  // Add this method to your AuthProvider class
-
-// Save user data directly without authentication
 Future<void> saveUserWithoutAuth({
   required String name,
   required String email,
   required String phoneNumber,
+  required String password, // Added password parameter
+  String? referralCodeEntered,
 }) async {
   try {
     _setLoading(true);
     _clearError();
 
-    // Check if phone number is already registered
+    // Check duplicates
     bool phoneExists = await _isPhoneNumberRegistered(phoneNumber);
-    if (phoneExists) {
-      throw Exception('Phone number is already registered');
-    }
+    if (phoneExists) throw Exception('Phone number is already registered');
 
-    // Check if email is already registered
     bool emailExists = await _isEmailRegistered(email);
-    if (emailExists) {
-      throw Exception('Email is already registered');
-    }
+    if (emailExists) throw Exception('Email is already registered');
 
     // Generate a unique user ID
     String userId = DateTime.now().millisecondsSinceEpoch.toString();
-    
-    // Create user model
+
+    // Generate referral code for this user
+    String myReferralCode = "${name.substring(0, 3).toUpperCase()}${userId.substring(7)}";
+
+    String? referrerId;
+
+    // If user entered a referral code → find who owns it
+    if (referralCodeEntered != null && referralCodeEntered.isNotEmpty) {
+      final query = await _firestore
+          .collection('users')
+          .where('referralCode', isEqualTo: referralCodeEntered)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception("Invalid referral code");
+      }
+
+      referrerId = query.docs.first.id;
+
+      // Prevent self-referral
+      if (referrerId == userId) {
+        throw Exception("You cannot use your own referral code");
+      }
+    }
+
+    // Hash the password before storing
+    String hashedPassword = _hashPassword(password);
+
+    // Create user model with password
     UserModel userModel = UserModel(
       id: userId,
       name: name,
       email: email,
       mobileNumber: phoneNumber,
-       locations: [],
+      password: hashedPassword, // Store hashed password
+      wallet: 0,
+      referralCode: myReferralCode,
+      referredBy: referrerId,
+      locations: [],
     );
 
-    // Save to Firestore
+    // Save new user
     await _firestore.collection('users').doc(userId).set(userModel.toJson());
 
-    // Save to local storage
+    // Reward: If referredBy exists → Add ₹50 to THIS user
+    if (referrerId != null) {
+      await _firestore.collection('users').doc(userId).update({
+        "wallet": FieldValue.increment(50),
+      });
+    }
+
+    // Save locally (don't save password locally)
     await UserPreferences.saveUser(
       userId: userId,
       name: name,
@@ -190,11 +229,156 @@ Future<void> saveUserWithoutAuth({
 
   } catch (e) {
     _setError(e.toString());
-    throw e; // Re-throw to handle in UI
+    throw e;
   } finally {
     _setLoading(false);
   }
 }
+
+// Future<void> saveUserWithoutAuth({
+//   required String name,
+//   required String email,
+//   required String phoneNumber,
+//   String? referralCodeEntered, // <-- NEW
+// }) async {
+//   try {
+//     _setLoading(true);
+//     _clearError();
+
+//     // Check duplicates
+//     bool phoneExists = await _isPhoneNumberRegistered(phoneNumber);
+//     if (phoneExists) throw Exception('Phone number is already registered');
+
+//     bool emailExists = await _isEmailRegistered(email);
+//     if (emailExists) throw Exception('Email is already registered');
+
+//     // Generate a unique user ID
+//     String userId = DateTime.now().millisecondsSinceEpoch.toString();
+
+//     // 1. Generate referral code for this user
+//     String myReferralCode = "${name.substring(0, 3).toUpperCase()}${userId.substring(7)}";
+
+//     String? referrerId;
+
+//     // 2. If user entered a referral code → find who owns it
+//     if (referralCodeEntered != null && referralCodeEntered.isNotEmpty) {
+//       final query = await _firestore
+//           .collection('users')
+//           .where('referralCode', isEqualTo: referralCodeEntered)
+//           .get();
+
+//       if (query.docs.isEmpty) {
+//         throw Exception("Invalid referral code");
+//       }
+
+//       referrerId = query.docs.first.id;
+
+//       // (Optional) Prevent self-referral
+//       if (referrerId == userId) {
+//         throw Exception("You cannot use your own referral code");
+//       }
+//     }
+
+//     // Create user model
+//     UserModel userModel = UserModel(
+//       id: userId,
+//       name: name,
+//       email: email,
+//       mobileNumber: phoneNumber,
+//       wallet: 0,
+//       referralCode: myReferralCode,
+//       referredBy: referrerId,
+//       locations: [],
+//     );
+
+//     // Save new user
+//     await _firestore.collection('users').doc(userId).set(userModel.toJson());
+
+//     // 3. Reward: If referredBy exists → Add ₹50 to THIS user
+//     if (referrerId != null) {
+//       await _firestore.collection('users').doc(userId).update({
+//         "wallet": FieldValue.increment(50),
+//       });
+//     }
+
+//     // Save locally
+//     await UserPreferences.saveUser(
+//       userId: userId,
+//       name: name,
+//       email: email,
+//       mobileNumber: phoneNumber,
+//     );
+
+//     _currentUserData = userModel;
+//     notifyListeners();
+
+//   } catch (e) {
+//     _setError(e.toString());
+//     throw e;
+//   } finally {
+//     _setLoading(false);
+//   }
+// }
+
+
+
+  // Add this method to your AuthProvider class
+
+// Save user data directly without authentication
+// Future<void> saveUserWithoutAuth({
+//   required String name,
+//   required String email,
+//   required String phoneNumber,
+// }) async {
+//   try {
+//     _setLoading(true);
+//     _clearError();
+
+//     // Check if phone number is already registered
+//     bool phoneExists = await _isPhoneNumberRegistered(phoneNumber);
+//     if (phoneExists) {
+//       throw Exception('Phone number is already registered');
+//     }
+
+//     // Check if email is already registered
+//     bool emailExists = await _isEmailRegistered(email);
+//     if (emailExists) {
+//       throw Exception('Email is already registered');
+//     }
+
+//     // Generate a unique user ID
+//     String userId = DateTime.now().millisecondsSinceEpoch.toString();
+    
+//     // Create user model
+//     UserModel userModel = UserModel(
+//       id: userId,
+//       name: name,
+//       email: email,
+//       mobileNumber: phoneNumber,
+//        locations: [],
+//     );
+
+//     // Save to Firestore
+//     await _firestore.collection('users').doc(userId).set(userModel.toJson());
+
+//     // Save to local storage
+//     await UserPreferences.saveUser(
+//       userId: userId,
+//       name: name,
+//       email: email,
+//       mobileNumber: phoneNumber,
+//     );
+
+//     _currentUserData = userModel;
+//     notifyListeners();
+
+//   } catch (e) {
+//     _setError(e.toString());
+//     throw e; // Re-throw to handle in UI
+//   } finally {
+//     _setLoading(false);
+//   }
+// }
 
 
 // Add this method to your AuthProvider class
@@ -237,6 +421,63 @@ Future<bool> loginWithPhoneNumber(String phoneNumber) async {
   } catch (e) {
     _setError(e.toString());
     return false;
+  } finally {
+    _setLoading(false);
+  }
+}
+
+
+
+
+Future<void> updatePassword({
+  required String phoneNumber,
+  required String newPassword,
+}) async {
+  try {
+    _setLoading(true);
+    _clearError();
+
+    // Find user by phone number
+    QuerySnapshot query = await _firestore
+        .collection('users')
+        .where('mobileNumber', isEqualTo: phoneNumber)
+        .get();
+
+    if (query.docs.isEmpty) {
+      throw Exception('Phone number not registered');
+    }
+
+    String userId = query.docs.first.id;
+
+    // Hash the new password
+    String hashedPassword = _hashPassword(newPassword);
+
+    // Update password in Firestore
+    await _firestore.collection('users').doc(userId).update({
+      'password': hashedPassword,
+    });
+
+    // If this is the current user, update local data
+    if (_currentUserData?.id == userId) {
+      _currentUserData = UserModel(
+        id: _currentUserData!.id,
+        name: _currentUserData!.name,
+        email: _currentUserData!.email,
+        mobileNumber: _currentUserData!.mobileNumber,
+        password: hashedPassword,
+        wallet: _currentUserData!.wallet,
+        referralCode: _currentUserData!.referralCode,
+        referredBy: _currentUserData!.referredBy,
+        locations: _currentUserData!.locations,
+        // profileImage: _currentUserData!.profileImage,
+      );
+    }
+
+    notifyListeners();
+
+  } catch (e) {
+    _setError(e.toString());
+    throw e;
   } finally {
     _setLoading(false);
   }

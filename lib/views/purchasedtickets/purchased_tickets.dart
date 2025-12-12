@@ -2521,22 +2521,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -2952,7 +2936,7 @@ class PurchasedTickets extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        badgeText,
+                        '${ticketData['ticketType']}',
                         style: TextStyle(
                           color: badgeTextColor,
                           fontSize: 12,
@@ -3127,7 +3111,10 @@ class PurchasedTickets extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.info_outline, color: Color(0xFF1976D2)),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      color: Color(0xFF1976D2),
+                    ),
                     label: const Text(
                       'View Details',
                       style: TextStyle(
@@ -3154,7 +3141,11 @@ class PurchasedTickets extends StatelessWidget {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                       ),
-                      icon: const Icon(Icons.save_alt, color: Colors.white, size: 18),
+                      icon: const Icon(
+                        Icons.save_alt,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       label: const Text(
                         'Download',
                         style: TextStyle(
@@ -3302,12 +3293,14 @@ class PurchasedTickets extends StatelessWidget {
         // For movie tickets, use QR code or ticket image
         imageUrl = ticketData['qrCodeImageUrl'] ?? ticketData['ticketImageUrl'];
         final movieName = ticketData['movieName'] ?? 'Movie';
-        fileName = 'Ticket_${movieName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        fileName =
+            'Ticket_${movieName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       } else {
         // For bus tickets, use ticket image
         imageUrl = ticketData['ticketImageUrl'];
         final busName = ticketData['busName'] ?? 'Bus';
-        fileName = 'Ticket_${busName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        fileName =
+            'Ticket_${busName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       }
 
       if (imageUrl == null || imageUrl.isEmpty) {
@@ -3324,12 +3317,12 @@ class PurchasedTickets extends StatelessWidget {
 
       // Download the image from URL
       final response = await http.get(Uri.parse(imageUrl));
-      
+
       if (response.statusCode == 200) {
         // Get temporary directory
         final tempDir = await getTemporaryDirectory();
         final filePath = '${tempDir.path}/$fileName';
-        
+
         // Save the file temporarily
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
@@ -3397,7 +3390,9 @@ class PurchasedTickets extends StatelessWidget {
           }
         }
       } else {
-        throw Exception('Failed to download image. Status: ${response.statusCode}');
+        throw Exception(
+          'Failed to download image. Status: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Download error: $e');

@@ -1879,10 +1879,15 @@
 //   }
 // }
 
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/provider/selltickets/sell_bus_ticket_provider.dart';
+import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:backup_ticket/model/bus_ticket_model.dart';
@@ -1925,6 +1930,13 @@ class _SellBusTicketState extends State<SellBusTicket> {
   String? _selectedTicketCount;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  TimeOfDay? _selectDeparturetime;
+  final String _googleApiKey = 'AIzaSyBAgjZGzhUBDznc-wI5eGRHyjVTfENnLSs';
+  List<Map<String, dynamic>> _fromSuggestions = [];
+  List<Map<String, dynamic>> _toSuggestions = [];
+  bool _showFromSuggestions = false;
+  bool _showToSuggestions = false;
+  Timer? _debounceTimer;
 
   // List to hold multiple passengers
   List<Passenger> _passengers = [];
@@ -1949,6 +1961,125 @@ class _SellBusTicketState extends State<SellBusTicket> {
     // Initialize with one passenger and one seat
     _addPassenger();
     _addSeat();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchPlaceSuggestions(
+    String input,
+  ) async {
+    if (input.isEmpty) return [];
+
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&types=(cities)&components=country:in&key=$_googleApiKey';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK') {
+          List<Map<String, dynamic>> suggestions = [];
+          for (var prediction in data['predictions']) {
+            suggestions.add({
+              'description': prediction['description'],
+              'place_id': prediction['place_id'],
+              'main_text': prediction['structured_formatting']['main_text'],
+            });
+          }
+          return suggestions;
+        }
+      }
+    } catch (e) {
+      print('Error fetching places: $e');
+    }
+
+    return [];
+  }
+
+  void _updateFromSuggestions(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _fromSuggestions = [];
+        _showFromSuggestions = false;
+      });
+      return;
+    }
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Create new timer (wait 500ms after user stops typing)
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      final suggestions = await _fetchPlaceSuggestions(query);
+      setState(() {
+        _fromSuggestions = suggestions;
+        _showFromSuggestions = suggestions.isNotEmpty;
+      });
+    });
+  }
+
+  void _updateToSuggestions(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _toSuggestions = [];
+        _showToSuggestions = false;
+      });
+      return;
+    }
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Create new timer (wait 500ms after user stops typing)
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      final suggestions = await _fetchPlaceSuggestions(query);
+      setState(() {
+        _toSuggestions = suggestions;
+        _showToSuggestions = suggestions.isNotEmpty;
+      });
+    });
+  }
+
+  Future<bool> _isUserLoggedIn() async {
+    final userId = await UserPreferences.getUserId();
+    return userId != null && userId != 'guest';
+  }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Login Required',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Please login to sell tickets. Guest users cannot sell tickets.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF214194),
+              ),
+              child: const Text('Login', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -2221,6 +2352,11 @@ class _SellBusTicketState extends State<SellBusTicket> {
   // }
 
   Future<void> _handleSubmit() async {
+    bool isLoggedIn = await _isUserLoggedIn();
+    if (!isLoggedIn) {
+      _showLoginDialog();
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       _showSnackBar('Please fill all required fields', isError: true);
       return;
@@ -2294,6 +2430,8 @@ class _SellBusTicketState extends State<SellBusTicket> {
         dateOfJourney: journeyDateTime,
         boardingTime:
             '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
+        departuretime:
+            '${_selectDeparturetime!.hour.toString().padLeft(2, '0')}:${_selectDeparturetime!.minute.toString().padLeft(2, '0')}',
         ticketType: _selectedTicketType!,
         numberOfTickets: int.parse(_selectedTicketCount!),
         pricePerTicket: double.parse(_priceController.text),
@@ -2318,7 +2456,9 @@ class _SellBusTicketState extends State<SellBusTicket> {
       final success = await provider.addBusTicket(ticket, imageFile: imageFile);
 
       if (success) {
-        _showSnackBar('Ticket added successfully!');
+        _showSnackBar(
+          'Thanks for uploaded your ticket our team will check and notify you once get uploaded',
+        );
         _resetForm();
         // Optionally navigate back or to another screen
         Navigator.pop(context);
@@ -2416,14 +2556,14 @@ class _SellBusTicketState extends State<SellBusTicket> {
                 children: [
                   _buildTextField(
                     'Full Name',
-                    'Tommy',
+                    'User',
                     _fullNameController,
                     required: true,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     'Phone Number',
-                    '9987652349',
+                    '123456789',
                     _phoneController,
                     required: true,
                     keyboardType: TextInputType.phone,
@@ -2431,7 +2571,7 @@ class _SellBusTicketState extends State<SellBusTicket> {
                   const SizedBox(height: 16),
                   _buildTextField(
                     'E-Mail',
-                    'tommy@gmail.com',
+                    'abc@gmail.com',
                     _emailController,
                     required: true,
                     keyboardType: TextInputType.emailAddress,
@@ -2451,18 +2591,289 @@ class _SellBusTicketState extends State<SellBusTicket> {
                   ),
                   const SizedBox(height: 16),
 
-                  _buildTextField(
-                    'From',
-                    'Enter pickup point',
-                    _pickupPointController,
-                    required: true,
+                  // Replace your existing _buildTextField calls for From and To with these:
+
+                  // From Field with Suggestions
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'From *',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _pickupPointController,
+                        onChanged: (value) {
+                          _updateFromSuggestions(value);
+                        },
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'From is required';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter pickup point',
+                          hintStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.blue,
+                              width: 1,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      if (_showFromSuggestions && _fromSuggestions.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _fromSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _fromSuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.blue,
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  suggestion['main_text'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  suggestion['description'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _pickupPointController.text =
+                                        suggestion['main_text'] ?? '';
+                                    _showFromSuggestions = false;
+                                    _fromSuggestions = [];
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
+
+                  // _buildTextField(
+                  //   'From',
+                  //   'Enter pickup point',
+                  //   _pickupPointController,
+                  //   required: true,
+                  // ),
+                  // const SizedBox(height: 16),
+                  // _buildTextField(
+                  //   'To',
+                  //   'Enter drop point',
+                  //   _dropPointController,
+                  //   required: true,
+                  // ),
                   const SizedBox(height: 16),
-                  _buildTextField(
-                    'To',
-                    'Enter drop point',
-                    _dropPointController,
-                    required: true,
+
+                  // To Field with Suggestions
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'To *',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _dropPointController,
+                        onChanged: (value) {
+                          _updateToSuggestions(value);
+                        },
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'To is required';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter drop point',
+                          hintStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.blue,
+                              width: 1,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      if (_showToSuggestions && _toSuggestions.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _toSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _toSuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.blue,
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  suggestion['main_text'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  suggestion['description'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _dropPointController.text =
+                                        suggestion['main_text'] ?? '';
+                                    _showToSuggestions = false;
+                                    _toSuggestions = [];
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
@@ -2477,6 +2888,14 @@ class _SellBusTicketState extends State<SellBusTicket> {
                     'Boarding Time',
                     _selectedTime != null
                         ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                        : '',
+                  ),
+                  const SizedBox(height: 16),
+
+                  _builddepartureTimeField(
+                    'Departure Time',
+                    _selectDeparturetime != null
+                        ? '${_selectDeparturetime!.hour.toString().padLeft(2, '0')}:${_selectDeparturetime!.minute.toString().padLeft(2, '0')}'
                         : '',
                   ),
 
@@ -2957,6 +3376,12 @@ class _SellBusTicketState extends State<SellBusTicket> {
           controller: controller,
           readOnly: readOnly,
           keyboardType: keyboardType,
+          inputFormatters: label == 'Age'
+              ? [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(2),
+                ]
+              : [],
           validator: required
               ? (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -2980,6 +3405,34 @@ class _SellBusTicketState extends State<SellBusTicket> {
                   return null;
                 }
               : null,
+
+          // TextFormField(
+          //   controller: controller,
+          //   readOnly: readOnly,
+          //   keyboardType: keyboardType,
+          //   validator: required
+          //       ? (value) {
+          //           if (value == null || value.trim().isEmpty) {
+          //             return '$label is required';
+          //           }
+          //           if (label == 'E-Mail' &&
+          //               !RegExp(
+          //                 r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+          //               ).hasMatch(value)) {
+          //             return 'Please enter a valid email';
+          //           }
+          //           if (label == 'Phone Number' && value.length < 10) {
+          //             return 'Please enter a valid phone number';
+          //           }
+          //           if (label == 'Age') {
+          //             final age = int.tryParse(value);
+          //             if (age == null || age < 1 || age > 120) {
+          //               return 'Please enter a valid age';
+          //             }
+          //           }
+          //           return null;
+          //         }
+          //       : null,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -3141,7 +3594,137 @@ class _SellBusTicketState extends State<SellBusTicket> {
     );
   }
 
+
   Widget _buildTimeField(String label, String hint) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '$label *',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+      ),
+      const SizedBox(height: 8),
+      InkWell(
+        onTap: () async {
+          final TimeOfDay? picked = await showTimePicker(
+            context: context,
+            initialTime: _selectedTime ?? TimeOfDay.now(),
+          );
+          if (picked != null) {
+            // Get current time
+            final now = DateTime.now();
+            final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
+            
+            // Convert TimeOfDay to minutes for comparison
+            final pickedMinutes = picked.hour * 60 + picked.minute;
+            final currentMinutes = currentTime.hour * 60 + currentTime.minute;
+            
+            // Check if selected date is today
+            final isToday = _selectedDate != null &&
+                _selectedDate!.year == now.year &&
+                _selectedDate!.month == now.month &&
+                _selectedDate!.day == now.day;
+            
+            // If it's today, check if time is at least 1 hour from now
+            if (isToday && pickedMinutes < (currentMinutes + 60)) {
+              _showSnackBar(
+                'Boarding time must be at least 1 hour from current time',
+                isError: true,
+              );
+              return;
+            }
+            
+            setState(() {
+              _selectedTime = picked;
+            });
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey, width: 1),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _selectedTime != null
+                    ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                    : hint,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _selectedTime != null ? Colors.black : Colors.grey,
+                ),
+              ),
+              const Icon(Icons.access_time, color: Colors.grey, size: 20),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+  // Widget _buildTimeField(String label, String hint) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         '$label *',
+  //         style: const TextStyle(
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.w500,
+  //           color: Colors.black87,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       InkWell(
+  //         onTap: () async {
+  //           final TimeOfDay? picked = await showTimePicker(
+  //             context: context,
+  //             initialTime: _selectedTime ?? TimeOfDay.now(),
+  //           );
+  //           if (picked != null) {
+  //             setState(() {
+  //               _selectedTime = picked;
+  //             });
+  //           }
+  //         },
+  //         child: Container(
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+  //           decoration: BoxDecoration(
+  //             border: Border.all(color: Colors.grey, width: 1),
+  //             borderRadius: BorderRadius.circular(8),
+  //             color: Colors.white,
+  //           ),
+  //           child: Row(
+  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //             children: [
+  //               Text(
+  //                 _selectedTime != null
+  //                     ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+  //                     : hint,
+  //                 style: TextStyle(
+  //                   fontSize: 14,
+  //                   color: _selectedTime != null ? Colors.black : Colors.grey,
+  //                 ),
+  //               ),
+  //               const Icon(Icons.access_time, color: Colors.grey, size: 20),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  Widget _builddepartureTimeField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3158,11 +3741,11 @@ class _SellBusTicketState extends State<SellBusTicket> {
           onTap: () async {
             final TimeOfDay? picked = await showTimePicker(
               context: context,
-              initialTime: _selectedTime ?? TimeOfDay.now(),
+              initialTime: _selectDeparturetime ?? TimeOfDay.now(),
             );
             if (picked != null) {
               setState(() {
-                _selectedTime = picked;
+                _selectDeparturetime = picked;
               });
             }
           },
@@ -3177,12 +3760,14 @@ class _SellBusTicketState extends State<SellBusTicket> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _selectedTime != null
-                      ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                  _selectDeparturetime != null
+                      ? '${_selectDeparturetime!.hour.toString().padLeft(2, '0')}:${_selectDeparturetime!.minute.toString().padLeft(2, '0')}'
                       : hint,
                   style: TextStyle(
                     fontSize: 14,
-                    color: _selectedTime != null ? Colors.black : Colors.grey,
+                    color: _selectDeparturetime != null
+                        ? Colors.black
+                        : Colors.grey,
                   ),
                 ),
                 const Icon(Icons.access_time, color: Colors.grey, size: 20),

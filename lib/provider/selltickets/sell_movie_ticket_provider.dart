@@ -1604,14 +1604,14 @@ class MovieTicketProvider with ChangeNotifier {
         return null;
       }
 
-      Position position = await _getUserLocation();
+      // Position position = await _getUserLocation();
 
       Map<String, dynamic> ticketData = ticket.toMap();
       ticketData['userId'] = userId;
       ticketData['ticketImageUrl'] = imageUrl;
       ticketData['qrCodeImageUrl'] = qrCodeUrl;
-      ticketData['latitude'] = position.latitude;
-      ticketData['longitude'] = position.longitude;
+      // ticketData['latitude'] = position.latitude;
+      // ticketData['longitude'] = position.longitude;
       ticketData['createdAt'] = FieldValue.serverTimestamp();
 
       DocumentReference docRef =
@@ -1787,29 +1787,28 @@ class MovieTicketProvider with ChangeNotifier {
   }
 
   // Get user location
-  Future<Position> _getUserLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Location services are disabled.');
-    }
+  // Future<Position> _getUserLocation() async {
+  //   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //   if (!serviceEnabled) {
+  //     throw Exception('Location services are disabled.');
+  //   }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-    }
+  //   LocationPermission permission = await Geolocator.checkPermission();
+  //   if (permission == LocationPermission.denied) {
+  //     permission = await Geolocator.requestPermission();
+  //     if (permission == LocationPermission.denied) {
+  //       throw Exception('Location permissions are denied');
+  //     }
+  //   }
 
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied.');
-    }
+  //   if (permission == LocationPermission.deniedForever) {
+  //     throw Exception('Location permissions are permanently denied.');
+  //   }
 
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-  }
-
+  //   return await Geolocator.getCurrentPosition(
+  //     desiredAccuracy: LocationAccuracy.high,
+  //   );
+  // }
   // Fetch ticket by movieName
   Future<MovieTicket?> getTicketByMovieName(String movieName) async {
     try {

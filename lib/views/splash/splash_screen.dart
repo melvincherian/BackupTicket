@@ -232,10 +232,561 @@
 
 
 
+// import 'package:backup_ticket/helper/auth_helper.dart';
+// import 'package:backup_ticket/views/auth/login_screen.dart';
+// import 'package:backup_ticket/views/navbar/navbar_screen.dart';
+// import 'package:flutter/material.dart';
+
+// class SplashScreen extends StatefulWidget {
+//   const SplashScreen({super.key});
+
+//   @override
+//   State<SplashScreen> createState() => _SplashScreenState();
+// }
+
+// class _SplashScreenState extends State<SplashScreen>
+//     with TickerProviderStateMixin {
+//   late AnimationController _scaleController;
+//   late AnimationController _fadeController;
+//   late AnimationController _slideController;
+
+//   late Animation<double> _scaleAnimation;
+//   late Animation<double> _fadeAnimation;
+//   late Animation<Offset> _slideAnimation;
+
+//   @override
+//   void initState() {
+//     super.initState();
+
+//     // Initialize animation controllers
+//     _scaleController = AnimationController(
+//       duration: const Duration(milliseconds: 800),
+//       vsync: this,
+//     );
+
+//     _fadeController = AnimationController(
+//       duration: const Duration(milliseconds: 1000),
+//       vsync: this,
+//     );
+
+//     _slideController = AnimationController(
+//       duration: const Duration(milliseconds: 1200),
+//       vsync: this,
+//     );
+
+//     // Create animations
+//     _scaleAnimation = Tween<double>(
+//       begin: 0.5,
+//       end: 1.0,
+//     ).animate(CurvedAnimation(
+//       parent: _scaleController,
+//       curve: Curves.elasticOut,
+//     ));
+
+//     _fadeAnimation = Tween<double>(
+//       begin: 0.0,
+//       end: 1.0,
+//     ).animate(CurvedAnimation(
+//       parent: _fadeController,
+//       curve: Curves.easeInOut,
+//     ));
+
+//     _slideAnimation = Tween<Offset>(
+//       begin: const Offset(0, 0.5),
+//       end: Offset.zero,
+//     ).animate(CurvedAnimation(
+//       parent: _slideController,
+//       curve: Curves.easeOutCubic,
+//     ));
+
+//     // Start animations with delays
+//     _startAnimations();
+//   }
+
+//   void _startAnimations() async {
+//     await Future.delayed(const Duration(milliseconds: 300));
+//     _scaleController.forward();
+
+//     await Future.delayed(const Duration(milliseconds: 200));
+//     _fadeController.forward();
+
+//     await Future.delayed(const Duration(milliseconds: 100));
+//     _slideController.forward();
+
+//     // Wait for animations to complete
+//     await Future.delayed(const Duration(milliseconds: 2000));
+
+//     // Check login status and navigate accordingly
+//     if (mounted) {
+//       await _checkLoginAndNavigate();
+//     }
+//   }
+
+//   Future<void> _checkLoginAndNavigate() async {
+//     try {
+//       final isLoggedIn = await UserPreferences.isLoggedIn();
+
+//       if (mounted) {
+//         if (isLoggedIn) {
+//           // User is logged in, navigate to navbar screen
+//           Navigator.of(context).pushReplacement(
+//             MaterialPageRoute(
+//               builder: (context) => const NavbarScreen(),
+//             ),
+//           );
+//         } else {
+//           // User is not logged in, navigate to onboarding screens
+//           Navigator.of(context).pushReplacement(
+//             MaterialPageRoute(
+//               builder: (context) => const OnboardingScreen(),
+//             ),
+//           );
+//         }
+//       }
+//     } catch (e) {
+//       // Handle any errors by navigating to onboarding screen as fallback
+//       if (mounted) {
+//         Navigator.of(context).pushReplacement(
+//           MaterialPageRoute(
+//             builder: (context) => const OnboardingScreen(),
+//           ),
+//         );
+//       }
+//     }
+//   }
+
+//   @override
+//   void dispose() {
+//     _scaleController.dispose();
+//     _fadeController.dispose();
+//     _slideController.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: Container(
+//         decoration: const BoxDecoration(
+//           gradient: LinearGradient(
+//             begin: Alignment.topCenter,
+//             end: Alignment.bottomCenter,
+//             colors: [
+//               Color(0xFF2E5BFF),
+//               Color(0xFF1E3A8A),
+//             ],
+//           ),
+//         ),
+//         child: Center(
+//           child: Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               // Animated Logo Container
+//               AnimatedBuilder(
+//                 animation: _scaleAnimation,
+//                 builder: (context, child) {
+//                   return Transform.scale(
+//                     scale: _scaleAnimation.value,
+//                     child: Container(
+//                       width: 120,
+//                       height: 120,
+//                       decoration: BoxDecoration(
+//                         color: Colors.white,
+//                         shape: BoxShape.circle,
+//                         boxShadow: [
+//                           BoxShadow(
+//                             color: Colors.black.withOpacity(0.2),
+//                             blurRadius: 20,
+//                             offset: const Offset(0, 10),
+//                           ),
+//                         ],
+//                       ),
+//                       child: ClipOval(
+//                         child: Image.asset(
+//                           'assets/splash.png',
+//                           width: 120,
+//                           height: 120,
+//                           fit: BoxFit.contain,
+//                           errorBuilder: (context, error, stackTrace) {
+//                             return const Icon(
+//                               Icons.delivery_dining,
+//                               size: 60,
+//                               color: Color(0xFF2E5BFF),
+//                             );
+//                           },
+//                         ),
+//                       ),
+//                     ),
+//                   );
+//                 },
+//               ),
+//               const SizedBox(height: 40),
+//               const SizedBox(height: 60),
+//               // Animated Loading Indicator
+//               FadeTransition(
+//                 opacity: _fadeAnimation,
+//                 child: SizedBox(
+//                   width: 40,
+//                   height: 40,
+//                   child: CircularProgressIndicator(
+//                     valueColor: AlwaysStoppedAnimation<Color>(
+//                       Colors.white.withOpacity(0.8),
+//                     ),
+//                     strokeWidth: 3,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // Onboarding Screen with PageView
+// class OnboardingScreen extends StatefulWidget {
+//   const OnboardingScreen({super.key});
+
+//   @override
+//   State<OnboardingScreen> createState() => _OnboardingScreenState();
+// }
+
+// class _OnboardingScreenState extends State<OnboardingScreen> {
+//   final PageController _pageController = PageController();
+//   int _currentPage = 0;
+
+//   final List<OnboardingData> _pages = [
+//     OnboardingData(
+//       image: 'assets/firstscreen.png',
+//       title: 'Movie Tickets',
+//       mainText: 'Buy ',
+//       highlightText: 'Unused\nTickets ',
+//       endText: 'Easily',
+//       description: 'Explore last-minute deals from\nreal users in your city.',
+//     ),
+//     OnboardingData(
+//       image: 'assets/bus.png',
+//       title: 'Bus Ticket',
+//       mainText: 'Sell Your  ',
+//       highlightText: 'Extra\nTickets ',
+//       endText: '',
+//       description: 'Sell your unused tickets and earn\nback your money in minutes',
+//     ),
+//     OnboardingData(
+//       image: 'assets/train.png',
+//       title: 'Train Ticket',
+//       mainText: '',
+//       highlightText: 'Safe&Quick\n',
+//       endText: 'Transactions ',
+//       description: 'Secure & Verified ticket exchange',
+//     ),
+//   ];
+
+//   @override
+//   void dispose() {
+//     _pageController.dispose();
+//     super.dispose();
+//   }
+
+//   void _onPageChanged(int index) {
+//     setState(() {
+//       _currentPage = index;
+//     });
+//   }
+
+//   void _nextPage() {
+//     if (_currentPage < _pages.length - 1) {
+//       _pageController.nextPage(
+//         duration: const Duration(milliseconds: 300),
+//         curve: Curves.easeInOut,
+//       );
+//     } else {
+//       // Navigate to login screen
+//       Navigator.pushReplacement(
+//         context,
+//         MaterialPageRoute(
+//           builder: (context) => LoginScreen(),
+//         ),
+//       );
+//     }
+//   }
+
+//   void _skipToLogin() {
+//     Navigator.pushReplacement(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => LoginScreen(),
+//       ),
+//     );
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.white,
+//       body: SafeArea(
+//         child: Column(
+//           children: [
+//             // Skip button
+//             Padding(
+//               padding: const EdgeInsets.all(16.0),
+//               child: Align(
+//                 alignment: Alignment.topRight,
+//                 child: TextButton(
+//                   onPressed: _skipToLogin,
+//                   child: const Text(
+//                     'Skip',
+//                     style: TextStyle(
+//                       color: Color(0xFF2E5BFF),
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.w600,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ),
+
+//             // PageView
+//             Expanded(
+//               child: PageView.builder(
+//                 controller: _pageController,
+//                 onPageChanged: _onPageChanged,
+//                 itemCount: _pages.length,
+//                 itemBuilder: (context, index) {
+//                   return OnboardingPage(data: _pages[index]);
+//                 },
+//               ),
+//             ),
+
+//             // Page indicators and next button
+//             Padding(
+//               padding: const EdgeInsets.all(24.0),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   // Page indicators
+//                   Row(
+//                     children: List.generate(
+//                       _pages.length,
+//                       (index) => Container(
+//                         margin: const EdgeInsets.symmetric(horizontal: 4),
+//                         width: _currentPage == index ? 24 : 8,
+//                         height: 8,
+//                         decoration: BoxDecoration(
+//                           color: _currentPage == index
+//                               ? const Color(0xFF2E5BFF)
+//                               : Colors.grey.shade300,
+//                           borderRadius: BorderRadius.circular(4),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+
+//                   // Next button
+//                   GestureDetector(
+//                     onTap: _nextPage,
+//                     child: Container(
+//                       width: 56,
+//                       height: 56,
+//                       decoration: BoxDecoration(
+//                         gradient: const LinearGradient(
+//                           colors: [Color(0xFF4F75FF), Color(0xFF2E5BFF)],
+//                         ),
+//                         shape: BoxShape.circle,
+//                         boxShadow: [
+//                           BoxShadow(
+//                             color: const Color(0xFF2E5BFF).withOpacity(0.3),
+//                             blurRadius: 15,
+//                             offset: const Offset(0, 8),
+//                           ),
+//                         ],
+//                       ),
+//                       child: Icon(
+//                         _currentPage == _pages.length - 1
+//                             ? Icons.check
+//                             : Icons.arrow_forward,
+//                         color: Colors.white,
+//                         size: 24,
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // Onboarding page widget
+// class OnboardingPage extends StatelessWidget {
+//   final OnboardingData data;
+
+//   const OnboardingPage({
+//     super.key,
+//     required this.data,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: [
+//         const SizedBox(height: 20),
+//         // Main content area with background
+//         Expanded(
+//           flex: 3,
+//           child: Container(
+//             width: 400,
+//             height: 360,
+//             child: Stack(
+//               children: [
+//                 // Background image
+//                 Positioned.fill(
+//                   child: Padding(
+//                     padding: const EdgeInsets.all(8.0),
+//                     child: Container(
+//                       decoration: const BoxDecoration(
+//                         image: DecorationImage(
+//                           image: AssetImage('assets/movie.png'),
+//                           fit: BoxFit.contain,
+//                           alignment: Alignment.topCenter,
+//                         ),
+//                         borderRadius: BorderRadius.only(
+//                           bottomLeft: Radius.elliptical(200, 100),
+//                           bottomRight: Radius.elliptical(200, 100),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+
+//                 // Content
+//                 Center(
+//                   child: Column(
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     children: [
+//                       Container(
+//                         width: 250,
+//                         height: 250,
+//                         child: Image.asset(
+//                           data.image,
+//                           fit: BoxFit.contain,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ),
+
+//         // Title
+//         Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 16.0),
+//           child: Text(
+//             data.title,
+//             style: const TextStyle(
+//               fontSize: 28,
+//               fontWeight: FontWeight.bold,
+//               color: Colors.black,
+//             ),
+//           ),
+//         ),
+
+//         // Bottom section
+//         Expanded(
+//           flex: 2,
+//           child: Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 24.0),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 RichText(
+//                   text: TextSpan(
+//                     style: const TextStyle(fontSize: 32, height: 1.2),
+//                     children: [
+//                       if (data.mainText.isNotEmpty)
+//                         TextSpan(
+//                           text: data.mainText,
+//                           style: const TextStyle(
+//                             color: Colors.black,
+//                             fontWeight: FontWeight.bold,
+//                           ),
+//                         ),
+//                       TextSpan(
+//                         text: data.highlightText,
+//                         style: const TextStyle(
+//                           color: Color(0xFF214194),
+//                           fontWeight: FontWeight.bold,
+//                         ),
+//                       ),
+//                       if (data.endText.isNotEmpty)
+//                         TextSpan(
+//                           text: data.endText,
+//                           style: const TextStyle(
+//                             color: Colors.black,
+//                             fontWeight: FontWeight.bold,
+//                           ),
+//                         ),
+//                     ],
+//                   ),
+//                 ),
+//                 const SizedBox(height: 16),
+//                 Text(
+//                   data.description,
+//                   style: const TextStyle(
+//                     fontSize: 16,
+//                     color: Colors.black,
+//                     height: 1.4,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+// // Data model for onboarding pages
+// class OnboardingData {
+//   final String image;
+//   final String title;
+//   final String mainText;
+//   final String highlightText;
+//   final String endText;
+//   final String description;
+
+//   OnboardingData({
+//     required this.image,
+//     required this.title,
+//     required this.mainText,
+//     required this.highlightText,
+//     required this.endText,
+//     required this.description,
+//   });
+// }
+
+
+
+
+
+
+
+
+
+
+
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:backup_ticket/views/navbar/navbar_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -246,77 +797,112 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _scaleController;
+  late AnimationController _logoController;
+  late AnimationController _ticketController;
+  late AnimationController _shimmerController;
   late AnimationController _fadeController;
-  late AnimationController _slideController;
 
-  late Animation<double> _scaleAnimation;
+  late Animation<double> _logoScaleAnimation;
+  late Animation<double> _logoRotationAnimation;
+  late Animation<double> _ticketSlideAnimation;
+  late Animation<double> _shimmerAnimation;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controllers
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
+    // Logo animation controller
+    _logoController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    // Create animations
-    _scaleAnimation = Tween<double>(
-      begin: 0.5,
+    // Ticket animation controller
+    _ticketController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    // Shimmer effect controller
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    // Fade controller
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    // Logo scale and rotation
+    _logoScaleAnimation = Tween<double>(
+      begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _scaleController,
+      parent: _logoController,
       curve: Curves.elasticOut,
     ));
 
+    _logoRotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 2 * math.pi,
+    ).animate(CurvedAnimation(
+      parent: _logoController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeInOut),
+    ));
+
+    // Ticket slide animation
+    _ticketSlideAnimation = Tween<double>(
+      begin: -200.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _ticketController,
+      curve: Curves.easeOutBack,
+    ));
+
+    // Shimmer animation
+    _shimmerAnimation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(
+      parent: _shimmerController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Fade animation
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeIn,
     ));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Start animations with delays
     _startAnimations();
   }
 
   void _startAnimations() async {
+    // Start logo animation
     await Future.delayed(const Duration(milliseconds: 300));
-    _scaleController.forward();
+    _logoController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 200));
+    // Start ticket animation
+    await Future.delayed(const Duration(milliseconds: 400));
+    _ticketController.forward();
+
+    // Start shimmer effect
+    await Future.delayed(const Duration(milliseconds: 600));
+    _shimmerController.repeat();
+
+    // Start fade animation
+    await Future.delayed(const Duration(milliseconds: 800));
     _fadeController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 100));
-    _slideController.forward();
+    // Wait and navigate
+    await Future.delayed(const Duration(milliseconds: 2500));
 
-    // Wait for animations to complete
-    await Future.delayed(const Duration(milliseconds: 2000));
-
-    // Check login status and navigate accordingly
     if (mounted) {
       await _checkLoginAndNavigate();
     }
@@ -328,14 +914,12 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (mounted) {
         if (isLoggedIn) {
-          // User is logged in, navigate to navbar screen
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const NavbarScreen(),
             ),
           );
         } else {
-          // User is not logged in, navigate to onboarding screens
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const OnboardingScreen(),
@@ -344,7 +928,6 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      // Handle any errors by navigating to onboarding screen as fallback
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -357,9 +940,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _scaleController.dispose();
+    _logoController.dispose();
+    _ticketController.dispose();
+    _shimmerController.dispose();
     _fadeController.dispose();
-    _slideController.dispose();
     super.dispose();
   }
 
@@ -369,76 +953,316 @@ class _SplashScreenState extends State<SplashScreen>
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF2E5BFF),
               Color(0xFF1E3A8A),
+              Color(0xFF2E5BFF),
+              Color(0xFF4F75FF),
             ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated Logo Container
-              AnimatedBuilder(
-                animation: _scaleAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+        child: Stack(
+          children: [
+            // Animated background particles
+            ...List.generate(20, (index) {
+              return AnimatedParticle(
+                delay: index * 100,
+                size: 4 + (index % 3) * 2,
+              );
+            }),
+
+            // Main content
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Animated Logo with rotation and scale
+                  AnimatedBuilder(
+                    animation: _logoController,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _logoScaleAnimation.value,
+                        child: Transform.rotate(
+                          angle: _logoRotationAnimation.value,
+                          child: Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.3),
+                                  blurRadius: 30,
+                                  spreadRadius: 10,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/splash.png',
+                                width: 140,
+                                height: 140,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.confirmation_number_rounded,
+                                    size: 70,
+                                    color: Color(0xFF2E5BFF),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/splash.png',
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.delivery_dining,
-                              size: 60,
-                              color: Color(0xFF2E5BFF),
-                            );
-                          },
                         ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Animated ticket icons
+                  AnimatedBuilder(
+                    animation: _ticketSlideAnimation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(_ticketSlideAnimation.value, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildTicketIcon(Icons.local_movies_outlined, 0),
+                            const SizedBox(width: 20),
+                            _buildTicketIcon(Icons.train_outlined, 100),
+                            const SizedBox(width: 20),
+                            _buildTicketIcon(Icons.directions_bus_outlined, 200),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 50),
+
+                  // App name with shimmer effect
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: AnimatedBuilder(
+                      animation: _shimmerAnimation,
+                      builder: (context, child) {
+                        return ShaderMask(
+                          shaderCallback: (bounds) {
+                            return LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: const [
+                                Colors.white54,
+                                Colors.white,
+                                Colors.white54,
+                              ],
+                              stops: [
+                                _shimmerAnimation.value - 0.3,
+                                _shimmerAnimation.value,
+                                _shimmerAnimation.value + 0.3,
+                              ],
+                            ).createShader(bounds);
+                          },
+                          child: const Text(
+                            'BackupTicket',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Tagline
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: const Text(
+                      'Buy & Sell Tickets Instantly',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white70,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 40),
-              const SizedBox(height: 60),
-              // Animated Loading Indicator
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.8),
-                    ),
-                    strokeWidth: 3,
                   ),
-                ),
+
+                  const SizedBox(height: 60),
+
+                  // Pulsing loading indicator
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.8, end: 1.2),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeInOut,
+                      builder: (context, scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 3,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      onEnd: () {
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTicketIcon(IconData icon, int delay) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + delay),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Animated particle widget for background effect
+class AnimatedParticle extends StatefulWidget {
+  final int delay;
+  final double size;
+
+  const AnimatedParticle({
+    super.key,
+    required this.delay,
+    required this.size,
+  });
+
+  @override
+  State<AnimatedParticle> createState() => _AnimatedParticleState();
+}
+
+class _AnimatedParticleState extends State<AnimatedParticle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late double _left;
+  late double _top;
+
+  @override
+  void initState() {
+    super.initState();
+    _left = math.Random().nextDouble() * 400;
+    _top = math.Random().nextDouble() * 800;
+
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 3000 + widget.delay),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: _left,
+      top: _top,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _animation.value * 0.6,
+            child: Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.5),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -502,7 +1326,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Navigate to login screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -528,7 +1351,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip button
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Align(
@@ -546,8 +1368,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-            // PageView
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -558,14 +1378,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-
-            // Page indicators and next button
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Page indicators
                   Row(
                     children: List.generate(
                       _pages.length,
@@ -582,8 +1399,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-
-                  // Next button
                   GestureDetector(
                     onTap: _nextPage,
                     child: Container(
@@ -635,7 +1450,6 @@ class OnboardingPage extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        // Main content area with background
         Expanded(
           flex: 3,
           child: Container(
@@ -643,7 +1457,6 @@ class OnboardingPage extends StatelessWidget {
             height: 360,
             child: Stack(
               children: [
-                // Background image
                 Positioned.fill(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -662,8 +1475,6 @@ class OnboardingPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Content
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -683,8 +1494,6 @@ class OnboardingPage extends StatelessWidget {
             ),
           ),
         ),
-
-        // Title
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Text(
@@ -696,8 +1505,6 @@ class OnboardingPage extends StatelessWidget {
             ),
           ),
         ),
-
-        // Bottom section
         Expanded(
           flex: 2,
           child: Padding(

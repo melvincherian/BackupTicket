@@ -1926,7 +1926,6 @@
 //   }
 // }
 
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -1991,6 +1990,11 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
   final _theatrePlaceController = TextEditingController();
   final _pricePerTicketController = TextEditingController();
   final _totalPriceController = TextEditingController();
+
+  final _qrCodeLinkController = TextEditingController();
+
+  final _commissionController = TextEditingController();
+  final _finalAmountController = TextEditingController();
 
   // Seat selection list
   List<SeatSelection> _selectedSeats = [];
@@ -2059,57 +2063,47 @@ class _SellMovieTicketState extends State<SellMovieTicket> {
     });
   }
 
-
-
   Future<bool> _isUserLoggedIn() async {
-  final userId = await UserPreferences.getUserId();
-  return userId != null && userId != 'guest';
-}
+    final userId = await UserPreferences.getUserId();
+    return userId != null && userId != 'guest';
+  }
 
-
-
-
-void _showLoginDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text(
-          'Login Required',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Please login to sell tickets. Guest users cannot sell tickets.',
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Login Required',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF214194),
-            ),
-            child: const Text(
-              'Login',
-              style: TextStyle(color: Colors.white),
-            ),
+          content: const Text(
+            'Please login to sell tickets. Guest users cannot sell tickets.',
+            style: TextStyle(fontSize: 16),
           ),
-        ],
-      );
-    },
-  );
-}
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF214194),
+              ),
+              child: const Text('Login', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _loadUserData() async {
     final name = await UserPreferences.getName();
@@ -2133,8 +2127,22 @@ void _showLoginDialog() {
     _theatrePlaceController.dispose();
     _pricePerTicketController.dispose();
     _totalPriceController.dispose();
+    _qrCodeLinkController.dispose();
+    _commissionController.dispose();
+    _finalAmountController.dispose();
     super.dispose();
   }
+
+  // void _calculateTotalPrice() {
+  //   if (_pricePerTicketController.text.isNotEmpty &&
+  //       _selectedTicketCount != null) {
+  //     double pricePerTicket =
+  //         double.tryParse(_pricePerTicketController.text) ?? 0;
+  //     int ticketCount = int.tryParse(_selectedTicketCount!) ?? 1;
+  //     double totalPrice = pricePerTicket * ticketCount;
+  //     _totalPriceController.text = totalPrice.toStringAsFixed(2);
+  //   }
+  // }
 
   void _calculateTotalPrice() {
     if (_pricePerTicketController.text.isNotEmpty &&
@@ -2143,7 +2151,14 @@ void _showLoginDialog() {
           double.tryParse(_pricePerTicketController.text) ?? 0;
       int ticketCount = int.tryParse(_selectedTicketCount!) ?? 1;
       double totalPrice = pricePerTicket * ticketCount;
+
+      // Calculate 10% commission
+      double commission = totalPrice * 0.10;
+      double finalAmount = totalPrice - commission;
+
       _totalPriceController.text = totalPrice.toStringAsFixed(2);
+      _commissionController.text = commission.toStringAsFixed(2);
+      _finalAmountController.text = finalAmount.toStringAsFixed(2);
     }
   }
 
@@ -2552,11 +2567,11 @@ void _showLoginDialog() {
   }
 
   Future<void> _submitForm() async {
-      bool isLoggedIn = await _isUserLoggedIn();
-  if (!isLoggedIn) {
-    _showLoginDialog();
-    return;
-  }
+    bool isLoggedIn = await _isUserLoggedIn();
+    if (!isLoggedIn) {
+      _showLoginDialog();
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2658,21 +2673,26 @@ void _showLoginDialog() {
 
       // Convert File to XFile for Firebase
       XFile? imageXFile;
-      XFile? qrCodeXFile;
+      // XFile? qrCodeXFile;
+
+      String? qrCodeLink = _qrCodeLinkController.text.trim().isNotEmpty
+          ? _qrCodeLinkController.text.trim()
+          : null;
 
       if (_selectedImage != null) {
         imageXFile = XFile(_selectedImage!.path);
       }
 
-      if (_selectedQrCodeImage != null) {
-        qrCodeXFile = XFile(_selectedQrCodeImage!.path);
-      }
+      // if (_selectedQrCodeImage != null) {
+      //   qrCodeXFile = XFile(_selectedQrCodeImage!.path);
+      // }
 
       // Submit to Firebase
       final ticketId = await provider.createMovieTicket(
         ticket,
         imageFile: imageXFile,
-        qrCodeFile: qrCodeXFile,
+        // qrCodeFile: qrCodeLink,
+        qrCodeLink: qrCodeLink,
       );
 
       Navigator.pop(context); // Close loading dialog
@@ -2680,7 +2700,9 @@ void _showLoginDialog() {
       if (ticketId != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Thanks for uploaded your ticket our team will check and notify you once get uploaded'),
+            content: Text(
+              'Thanks for uploaded your ticket our team will check and notify you once get uploaded',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -2709,7 +2731,7 @@ void _showLoginDialog() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-   backgroundColor: const Color(0xFFECEFF1),
+      backgroundColor: const Color(0xFFECEFF1),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -2892,9 +2914,9 @@ void _showLoginDialog() {
                     },
                     required: true,
                   ),
-                  // const SizedBox(height: 16),
 
-                   const SizedBox(height: 16),
+                  // const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   if (_selectedCategory != null)
                     _buildDropdownField(
@@ -2926,7 +2948,7 @@ void _showLoginDialog() {
                   ),
                   const SizedBox(height: 16),
                   _buildSeatSelectionField(),
-                 
+
                   const SizedBox(height: 16),
                   _buildTextField(
                     'Price per Ticket',
@@ -2936,18 +2958,24 @@ void _showLoginDialog() {
                     isNumber: true,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
+
+                  // Row(children: [Text(' ')]),
+
+                  // const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 13,
                         child: _buildTextField(
-                          'Total Price',
+                          '⚠️ After deducting the platform fee, below amount will be added to your wallet',
                           'Total price',
-                          _totalPriceController,
+                          // _totalPriceController,
+                          _finalAmountController,
                           readOnly: true,
                         ),
                       ),
+
                       const Expanded(flex: 2, child: SizedBox()),
                     ],
                   ),
@@ -2957,11 +2985,46 @@ void _showLoginDialog() {
                     false,
                     _selectedImage,
                   ),
+
+                  //                   const SizedBox(height: 16),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: _buildTextField(
+                  //         'Commission (10%)',
+                  //         'Commission amount',
+                  //         _commissionController,
+                  //         readOnly: true,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+
+                  // const SizedBox(height: 16),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: _buildTextField(
+                  //         'Final Amount (After Commission)',
+                  //         'Amount you will receive',
+                  //         _finalAmountController,
+                  //         readOnly: true,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 16),
-                  _buildFileUploadField(
-                    'Upload QR Code',
-                    true,
-                    _selectedQrCodeImage,
+
+                  // _buildFileUploadField(
+                  //   'Upload QR Code',
+                  //   true,
+                  //   _selectedQrCodeImage,
+                  // ),
+                  _buildTextField(
+                    'QR Code Link',
+                    'Paste QR code link here',
+                    _qrCodeLinkController,
+                    required: false,
                   ),
                   const SizedBox(height: 24),
                   Row(

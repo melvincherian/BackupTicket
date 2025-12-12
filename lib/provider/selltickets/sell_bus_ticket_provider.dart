@@ -1515,17 +1515,22 @@ Future<void> fetchMyTickets() async {
     _setLoading(true);
     _setError(null);
     
-    String? userId = await UserPreferences.getUserId();
-    if (userId == null) {
-      _setLoading(false);
-      _setError("User not logged in");
-      return;
-    }
+    // String? userId = await UserPreferences.getUserId();
+    // if (userId == null) {
+    //   _setLoading(false);
+    //   _setError("User not logged in");
+    //   return;
+    // }
     
     // Remove orderBy from the query to avoid index requirement
-    final QuerySnapshot snapshot = await _firestore
+    // final QuerySnapshot snapshot = await _firestore
+    //     .collection(_collectionName)
+    //     .where('sellerId', isEqualTo: userId)
+    //     .get();
+
+       final QuerySnapshot snapshot = await _firestore
         .collection(_collectionName)
-        .where('sellerId', isEqualTo: userId)
+        .where('sellerId',)
         .get();
     
     // Convert to list and sort in memory

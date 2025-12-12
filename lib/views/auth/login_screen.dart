@@ -1,4 +1,5 @@
 import 'package:backup_ticket/provider/auth/auth_provider.dart';
+import 'package:backup_ticket/views/auth/forgot_password_screen.dart';
 import 'package:backup_ticket/views/auth/otp_screen.dart';
 import 'package:backup_ticket/views/auth/signup_screen.dart';
 import 'package:backup_ticket/views/navbar/navbar_screen.dart';
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+  final _passwordController=TextEditingController();
 
   @override
   void dispose() {
@@ -72,6 +74,42 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return null;
   }
+
+
+String? _validatePassword(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Please enter your password';
+  }
+
+  String password = value.trim();
+
+  // Minimum length
+  if (password.length < 8) {
+    return 'Password must be at least 6 characters long';
+  }
+
+  // At least one uppercase
+  if (!RegExp(r'[A-Z]').hasMatch(password)) {
+    return 'Password must contain at least one uppercase letter';
+  }
+
+  // At least one lowercase
+  if (!RegExp(r'[a-z]').hasMatch(password)) {
+    return 'Password must contain at least one lowercase letter';
+  }
+
+  // At least one digit
+  if (!RegExp(r'\d').hasMatch(password)) {
+    return 'Password must contain at least one number';
+  }
+
+  // At least one special character
+  if (!RegExp(r'[!@#$%^&*(),.?":{}|<>_\\-]').hasMatch(password)) {
+    return 'Password must contain at least one special character';
+  }
+
+  return null; // Valid password
+}
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +215,46 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        // SizedBox(height: 15,),
+
+                        // const Text(
+                        //   'Password',
+                        //   style: TextStyle(
+                        //     fontSize: 14,
+                        //     fontWeight: FontWeight.w500,
+                        //     color: Colors.black87,
+                        //   ),
+                        // ),
+                        //    Container(
+                        //   decoration: BoxDecoration(
+                        //     border: Border.all(color: Colors.grey.shade300),
+                        //     borderRadius: BorderRadius.circular(12),
+                        //   ),
+                        //   child: TextFormField(
+                        //     controller: _passwordController,
+                        //     validator: _validatePassword,
+                        //     keyboardType: TextInputType.phone,
+                        //     // maxLength: 10,
+                        //     decoration: InputDecoration(
+                        //       hintText: 'Enter your password',
+                        //       // labelText: 'Password',
+                        //       hintStyle: TextStyle(
+                        //         color: Colors.grey.shade500,
+                        //         fontSize: 16,
+                        //       ),
+                        //       prefixIcon: Icon(
+                        //         Icons.lock,
+                        //         color: Colors.grey.shade500,
+                        //       ),
+                        //       border: InputBorder.none,
+                        //       contentPadding: const EdgeInsets.symmetric(
+                        //         horizontal: 16,
+                        //         vertical: 16,
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                         
 
                         const SizedBox(height: 30),
                         SizedBox(
@@ -296,6 +374,36 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               child: Text(
                                 'SignUp',
+                                style: TextStyle(
+                                  color: Color(0xFF4A6CF7),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Text(
+                            //   "Don't have an account? ",
+                            //   style: TextStyle(color: Colors.black),
+                            // ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ForgotPasswordScreen(), // Your signup page
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Forgot Password?',
                                 style: TextStyle(
                                   color: Color(0xFF4A6CF7),
                                   fontWeight: FontWeight.bold,

@@ -1576,139 +1576,258 @@ class MovieTicketProvider with ChangeNotifier {
   }
 
   // Create a new movie ticket
-  Future<String?> createMovieTicket(
-    MovieTicket ticket, {
-    XFile? imageFile,
-    XFile? qrCodeFile,
-  }) async {
-    try {
-      _setLoading(true);
-      _setError(null);
+  // Future<String?> createMovieTicket(
+  //   MovieTicket ticket, {
+  //   XFile? imageFile,
+  //   XFile? qrCodeFile,
+  // }) async {
+  //   try {
+  //     _setLoading(true);
+  //     _setError(null);
 
-      String? imageUrl;
-      String? qrCodeUrl;
+  //     String? imageUrl;
+  //     String? qrCodeUrl;
 
-      if (imageFile != null) {
-        imageUrl = await uploadTicketImage(imageFile);
-        if (imageUrl == null) return null;
-      }
+  //     if (imageFile != null) {
+  //       imageUrl = await uploadTicketImage(imageFile);
+  //       if (imageUrl == null) return null;
+  //     }
 
-      if (qrCodeFile != null) {
-        qrCodeUrl = await uploadQrCodeImage(qrCodeFile);
-        if (qrCodeUrl == null) return null;
-      }
+  //     if (qrCodeFile != null) {
+  //       qrCodeUrl = await uploadQrCodeImage(qrCodeFile);
+  //       if (qrCodeUrl == null) return null;
+  //     }
 
-      String? userId = await UserPreferences.getUserId();
-      if (userId == null) {
-        _setError("User not logged in");
-        return null;
-      }
+  //     String? userId = await UserPreferences.getUserId();
+  //     if (userId == null) {
+  //       _setError("User not logged in");
+  //       return null;
+  //     }
 
-      // Position position = await _getUserLocation();
+  //     // Position position = await _getUserLocation();
 
-      Map<String, dynamic> ticketData = ticket.toMap();
-      ticketData['userId'] = userId;
-      ticketData['ticketImageUrl'] = imageUrl;
-      ticketData['qrCodeImageUrl'] = qrCodeUrl;
-      // ticketData['latitude'] = position.latitude;
-      // ticketData['longitude'] = position.longitude;
-      ticketData['createdAt'] = FieldValue.serverTimestamp();
+  //     Map<String, dynamic> ticketData = ticket.toMap();
+  //     ticketData['userId'] = userId;
+  //     ticketData['ticketImageUrl'] = imageUrl;
+  //     ticketData['qrCodeImageUrl'] = qrCodeUrl;
+  //     // ticketData['latitude'] = position.latitude;
+  //     // ticketData['longitude'] = position.longitude;
+  //     ticketData['createdAt'] = FieldValue.serverTimestamp();
 
-      DocumentReference docRef =
-          await _firestore.collection(_collectionName).add(ticketData);
+  //     DocumentReference docRef =
+  //         await _firestore.collection(_collectionName).add(ticketData);
 
-      await fetchAllTickets();
+  //     await fetchAllTickets();
 
-      return docRef.id;
-    } catch (e) {
-      _setError('Failed to create ticket: ${e.toString()}');
-      return null;
-    } finally {
-      _setLoading(false);
+  //     return docRef.id;
+  //   } catch (e) {
+  //     _setError('Failed to create ticket: ${e.toString()}');
+  //     return null;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
+
+
+
+// Create a new movie ticket
+Future<String?> createMovieTicket(
+  MovieTicket ticket, {
+  XFile? imageFile,
+  String? qrCodeLink, // Changed from XFile? qrCodeFile
+}) async {
+  try {
+    _setLoading(true);
+    _setError(null);
+
+    String? imageUrl;
+
+    if (imageFile != null) {
+      imageUrl = await uploadTicketImage(imageFile);
+      if (imageUrl == null) return null;
     }
+
+    String? userId = await UserPreferences.getUserId();
+    if (userId == null) {
+      _setError("User not logged in");
+      return null;
+    }
+
+    Map<String, dynamic> ticketData = ticket.toMap();
+    ticketData['userId'] = userId;
+    ticketData['ticketImageUrl'] = imageUrl;
+    ticketData['qrCodeImageUrl'] = qrCodeLink; // Store the link directly
+    ticketData['createdAt'] = FieldValue.serverTimestamp();
+
+    DocumentReference docRef =
+        await _firestore.collection(_collectionName).add(ticketData);
+
+    await fetchAllTickets();
+
+    return docRef.id;
+  } catch (e) {
+    _setError('Failed to create ticket: ${e.toString()}');
+    return null;
+  } finally {
+    _setLoading(false);
   }
+}
 
   // Update movie ticket
+  // Future<bool> updateMovieTicket(
+  //   String ticketId,
+  //   MovieTicket updatedTicket, {
+  //   XFile? newImageFile,
+  //   XFile? newQrCodeFile,
+  //   bool removeExistingImage = false,
+  //   bool removeExistingQrCode = false,
+  // }) async {
+  //   try {
+  //     _setLoading(true);
+  //     _setError(null);
+
+  //     MovieTicket? existingTicket = _tickets.firstWhere(
+  //       (t) => t.id == ticketId,
+  //       orElse: () => throw Exception('Ticket not found'),
+  //     );
+
+  //     String? newImageUrl = existingTicket.ticketImageUrl;
+  //     String? newQrCodeUrl = existingTicket.qrCodeImageUrl;
+
+  //     if (removeExistingImage && existingTicket.ticketImageUrl != null) {
+  //       try {
+  //         await CloudinaryService.deleteImage(existingTicket.ticketImageUrl!);
+  //       } catch (_) {}
+  //       newImageUrl = null;
+  //     }
+
+  //     if (newImageFile != null) {
+  //       if (existingTicket.ticketImageUrl != null) {
+  //         try {
+  //           await CloudinaryService.deleteImage(existingTicket.ticketImageUrl!);
+  //         } catch (_) {}
+  //       }
+
+  //       newImageUrl = await uploadTicketImage(newImageFile);
+  //       if (newImageUrl == null) return false;
+  //     }
+
+  //     if (removeExistingQrCode && existingTicket.qrCodeImageUrl != null) {
+  //       try {
+  //         await CloudinaryService.deleteImage(existingTicket.qrCodeImageUrl!);
+  //       } catch (_) {}
+  //       newQrCodeUrl = null;
+  //     }
+
+  //     if (newQrCodeFile != null) {
+  //       if (existingTicket.qrCodeImageUrl != null) {
+  //         try {
+  //           await CloudinaryService.deleteImage(existingTicket.qrCodeImageUrl!);
+  //         } catch (_) {}
+  //       }
+
+  //       newQrCodeUrl = await uploadQrCodeImage(newQrCodeFile);
+  //       if (newQrCodeUrl == null) return false;
+  //     }
+
+  //     Map<String, dynamic> updateData = updatedTicket.toMap();
+  //     updateData['ticketImageUrl'] = newImageUrl;
+  //     updateData['qrCodeImageUrl'] = newQrCodeUrl;
+
+  //     await _firestore.collection(_collectionName).doc(ticketId).update(updateData);
+
+  //     int index = _tickets.indexWhere((t) => t.id == ticketId);
+  //     if (index != -1) {
+  //       _tickets[index] = updatedTicket.copyWith(
+  //         id: ticketId,
+  //         ticketImageUrl: newImageUrl,
+  //         qrCodeImageUrl: newQrCodeUrl,
+  //       );
+  //       notifyListeners();
+  //     }
+
+  //     return true;
+  //   } catch (e) {
+  //     _setError('Failed to update ticket: ${e.toString()}');
+  //     return false;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
+
+
+
   Future<bool> updateMovieTicket(
-    String ticketId,
-    MovieTicket updatedTicket, {
-    XFile? newImageFile,
-    XFile? newQrCodeFile,
-    bool removeExistingImage = false,
-    bool removeExistingQrCode = false,
-  }) async {
-    try {
-      _setLoading(true);
-      _setError(null);
+  String ticketId,
+  MovieTicket updatedTicket, {
+  XFile? newImageFile,
+  String? newQrCodeLink, // Changed from XFile? newQrCodeFile
+  bool removeExistingImage = false,
+  bool removeExistingQrCode = false,
+}) async {
+  try {
+    _setLoading(true);
+    _setError(null);
 
-      MovieTicket? existingTicket = _tickets.firstWhere(
-        (t) => t.id == ticketId,
-        orElse: () => throw Exception('Ticket not found'),
-      );
+    MovieTicket? existingTicket = _tickets.firstWhere(
+      (t) => t.id == ticketId,
+      orElse: () => throw Exception('Ticket not found'),
+    );
 
-      String? newImageUrl = existingTicket.ticketImageUrl;
-      String? newQrCodeUrl = existingTicket.qrCodeImageUrl;
+    String? newImageUrl = existingTicket.ticketImageUrl;
+    String? qrCodeUrl = existingTicket.qrCodeImageUrl;
 
-      if (removeExistingImage && existingTicket.ticketImageUrl != null) {
+    if (removeExistingImage && existingTicket.ticketImageUrl != null) {
+      try {
+        await CloudinaryService.deleteImage(existingTicket.ticketImageUrl!);
+      } catch (_) {}
+      newImageUrl = null;
+    }
+
+    if (newImageFile != null) {
+      if (existingTicket.ticketImageUrl != null) {
         try {
           await CloudinaryService.deleteImage(existingTicket.ticketImageUrl!);
         } catch (_) {}
-        newImageUrl = null;
       }
 
-      if (newImageFile != null) {
-        if (existingTicket.ticketImageUrl != null) {
-          try {
-            await CloudinaryService.deleteImage(existingTicket.ticketImageUrl!);
-          } catch (_) {}
-        }
-
-        newImageUrl = await uploadTicketImage(newImageFile);
-        if (newImageUrl == null) return false;
-      }
-
-      if (removeExistingQrCode && existingTicket.qrCodeImageUrl != null) {
-        try {
-          await CloudinaryService.deleteImage(existingTicket.qrCodeImageUrl!);
-        } catch (_) {}
-        newQrCodeUrl = null;
-      }
-
-      if (newQrCodeFile != null) {
-        if (existingTicket.qrCodeImageUrl != null) {
-          try {
-            await CloudinaryService.deleteImage(existingTicket.qrCodeImageUrl!);
-          } catch (_) {}
-        }
-
-        newQrCodeUrl = await uploadQrCodeImage(newQrCodeFile);
-        if (newQrCodeUrl == null) return false;
-      }
-
-      Map<String, dynamic> updateData = updatedTicket.toMap();
-      updateData['ticketImageUrl'] = newImageUrl;
-      updateData['qrCodeImageUrl'] = newQrCodeUrl;
-
-      await _firestore.collection(_collectionName).doc(ticketId).update(updateData);
-
-      int index = _tickets.indexWhere((t) => t.id == ticketId);
-      if (index != -1) {
-        _tickets[index] = updatedTicket.copyWith(
-          id: ticketId,
-          ticketImageUrl: newImageUrl,
-          qrCodeImageUrl: newQrCodeUrl,
-        );
-        notifyListeners();
-      }
-
-      return true;
-    } catch (e) {
-      _setError('Failed to update ticket: ${e.toString()}');
-      return false;
-    } finally {
-      _setLoading(false);
+      newImageUrl = await uploadTicketImage(newImageFile);
+      if (newImageUrl == null) return false;
     }
+
+    // Handle QR code link
+    if (removeExistingQrCode) {
+      qrCodeUrl = null;
+    }
+
+    if (newQrCodeLink != null && newQrCodeLink.isNotEmpty) {
+      qrCodeUrl = newQrCodeLink; // Simply store the new link
+    }
+
+    Map<String, dynamic> updateData = updatedTicket.toMap();
+    updateData['ticketImageUrl'] = newImageUrl;
+    updateData['qrCodeImageUrl'] = qrCodeUrl;
+
+    await _firestore.collection(_collectionName).doc(ticketId).update(updateData);
+
+    int index = _tickets.indexWhere((t) => t.id == ticketId);
+    if (index != -1) {
+      _tickets[index] = updatedTicket.copyWith(
+        id: ticketId,
+        ticketImageUrl: newImageUrl,
+        qrCodeImageUrl: qrCodeUrl,
+      );
+      notifyListeners();
+    }
+
+    return true;
+  } catch (e) {
+    _setError('Failed to update ticket: ${e.toString()}');
+    return false;
+  } finally {
+    _setLoading(false);
   }
+}
 
   // Fetch all tickets
   Future<void> fetchAllTickets() async {
@@ -1866,41 +1985,73 @@ Future<bool> deleteTicket(String ticketId) async {
 }
 
   // Delete ticket
+  // Future<bool> deleteMovieTicket(String ticketId) async {
+  //   try {
+  //     _setLoading(true);
+  //     _setError(null);
+
+  //     MovieTicket? ticket = _tickets.firstWhere(
+  //       (t) => t.id == ticketId,
+  //       orElse: () => throw Exception('Ticket not found'),
+  //     );
+
+  //     if (ticket.ticketImageUrl != null) {
+  //       try {
+  //         await CloudinaryService.deleteImage(ticket.ticketImageUrl!);
+  //       } catch (_) {}
+  //     }
+
+  //     if (ticket.qrCodeImageUrl != null) {
+  //       try {
+  //         await CloudinaryService.deleteImage(ticket.qrCodeImageUrl!);
+  //       } catch (_) {}
+  //     }
+
+  //     await _firestore.collection(_collectionName).doc(ticketId).delete();
+
+  //     _tickets.removeWhere((t) => t.id == ticketId);
+  //     notifyListeners();
+
+  //     return true;
+  //   } catch (e) {
+  //     _setError('Failed to delete ticket: ${e.toString()}');
+  //     return false;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
+
+
   Future<bool> deleteMovieTicket(String ticketId) async {
-    try {
-      _setLoading(true);
-      _setError(null);
+  try {
+    _setLoading(true);
+    _setError(null);
 
-      MovieTicket? ticket = _tickets.firstWhere(
-        (t) => t.id == ticketId,
-        orElse: () => throw Exception('Ticket not found'),
-      );
+    MovieTicket? ticket = _tickets.firstWhere(
+      (t) => t.id == ticketId,
+      orElse: () => throw Exception('Ticket not found'),
+    );
 
-      if (ticket.ticketImageUrl != null) {
-        try {
-          await CloudinaryService.deleteImage(ticket.ticketImageUrl!);
-        } catch (_) {}
-      }
-
-      if (ticket.qrCodeImageUrl != null) {
-        try {
-          await CloudinaryService.deleteImage(ticket.qrCodeImageUrl!);
-        } catch (_) {}
-      }
-
-      await _firestore.collection(_collectionName).doc(ticketId).delete();
-
-      _tickets.removeWhere((t) => t.id == ticketId);
-      notifyListeners();
-
-      return true;
-    } catch (e) {
-      _setError('Failed to delete ticket: ${e.toString()}');
-      return false;
-    } finally {
-      _setLoading(false);
+    // Only delete ticket image from Cloudinary, not QR code (it's just a link now)
+    if (ticket.ticketImageUrl != null) {
+      try {
+        await CloudinaryService.deleteImage(ticket.ticketImageUrl!);
+      } catch (_) {}
     }
+
+    await _firestore.collection(_collectionName).doc(ticketId).delete();
+
+    _tickets.removeWhere((t) => t.id == ticketId);
+    notifyListeners();
+
+    return true;
+  } catch (e) {
+    _setError('Failed to delete ticket: ${e.toString()}');
+    return false;
+  } finally {
+    _setLoading(false);
   }
+}
 
   // ⭐⭐⭐ Filter Using Enum
   List<MovieTicket> getTicketsByStatus(TicketStatus status) {

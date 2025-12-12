@@ -1,28 +1,3 @@
-// import 'package:backup_ticket/views/splash/splash_screen.dart';
-// import 'package:flutter/material.dart';
-
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Backup Ticket',
-//       theme: ThemeData(
-
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-//       ),
-//       debugShowCheckedModeBanner: false,
-//       home: const SplashScreen()
-//     );
-//   }
-// }
-
 import 'package:backup_ticket/provider/auth/auth_provider.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/provider/movie/movie_category_provider.dart';

@@ -2428,87 +2428,87 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   // Method to show QR code in full screen
-  void _showQRCodeFullScreen(BuildContext context, String qrCodeUrl) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'QR Code',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          qrCodeUrl,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[100],
-                              child: const Icon(
-                                Icons.qr_code,
-                                size: 80,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // void _showQRCodeFullScreen(BuildContext context, String qrCodeUrl) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return Dialog(
+  //         backgroundColor: Colors.transparent,
+  //         child: Stack(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(20),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white,
+  //                 borderRadius: BorderRadius.circular(15),
+  //               ),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   const Text(
+  //                     'QR Code',
+  //                     style: TextStyle(
+  //                       fontSize: 18,
+  //                       fontWeight: FontWeight.bold,
+  //                       color: Colors.black87,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+  //                   Container(
+  //                     width: 250,
+  //                     height: 250,
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.white,
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       border: Border.all(color: Colors.grey[300]!),
+  //                     ),
+  //                     child: ClipRRect(
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       child: Image.network(
+  //                         qrCodeUrl,
+  //                         fit: BoxFit.contain,
+  //                         loadingBuilder: (context, child, loadingProgress) {
+  //                           if (loadingProgress == null) return child;
+  //                           return Center(
+  //                             child: CircularProgressIndicator(
+  //                               value:
+  //                                   loadingProgress.expectedTotalBytes != null
+  //                                   ? loadingProgress.cumulativeBytesLoaded /
+  //                                         loadingProgress.expectedTotalBytes!
+  //                                   : null,
+  //                             ),
+  //                           );
+  //                         },
+  //                         errorBuilder: (context, error, stackTrace) {
+  //                           return Container(
+  //                             color: Colors.grey[100],
+  //                             child: const Icon(
+  //                               Icons.qr_code,
+  //                               size: 80,
+  //                               color: Colors.grey,
+  //                             ),
+  //                           );
+  //                         },
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             Positioned(
+  //               top: 40,
+  //               right: 20,
+  //               child: IconButton(
+  //                 onPressed: () => Navigator.pop(context),
+  //                 icon: const Icon(Icons.close, color: Colors.white, size: 30),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {

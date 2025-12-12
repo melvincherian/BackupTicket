@@ -2577,18 +2577,18 @@ class _SellBusTicketState extends State<SellBusTicket> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
-                  _buildDropdownField(
-                    'Gender',
-                    'Male',
-                    ['Male', 'Female', 'Other'],
-                    _selectedGender,
-                    (value) {
-                      setState(() {
-                        _selectedGender = value;
-                      });
-                    },
-                    required: true,
-                  ),
+                  // _buildDropdownField(
+                  //   'Gender',
+                  //   'Male',
+                  //   ['Male', 'Female', 'Other'],
+                  //   _selectedGender,
+                  //   (value) {
+                  //     setState(() {
+                  //       _selectedGender = value;
+                  //     });
+                  //   },
+                  //   required: true,
+                  // ),
                   const SizedBox(height: 16),
 
                   // Replace your existing _buildTextField calls for From and To with these:
@@ -2931,8 +2931,7 @@ class _SellBusTicketState extends State<SellBusTicket> {
                   const SizedBox(height: 16),
 
                   // Seat Numbers Section
-                  _buildSeatSection(),
-
+                  // _buildSeatSection(),
                   const SizedBox(height: 16),
 
                   _buildDropdownField(
@@ -3237,6 +3236,9 @@ class _SellBusTicketState extends State<SellBusTicket> {
               required: true,
             ),
             const SizedBox(height: 12),
+            _buildSeatSection(),
+            const SizedBox(height: 12),
+
             Row(
               children: [
                 Expanded(
@@ -3327,6 +3329,8 @@ class _SellBusTicketState extends State<SellBusTicket> {
                     ],
                   ),
                 ),
+
+                // _buildSeatSection(),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildTextField(
@@ -3594,82 +3598,82 @@ class _SellBusTicketState extends State<SellBusTicket> {
     );
   }
 
-
   Widget _buildTimeField(String label, String hint) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        '$label *',
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label *',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      InkWell(
-        onTap: () async {
-          final TimeOfDay? picked = await showTimePicker(
-            context: context,
-            initialTime: _selectedTime ?? TimeOfDay.now(),
-          );
-          if (picked != null) {
-            // Get current time
-            final now = DateTime.now();
-            final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
-            
-            // Convert TimeOfDay to minutes for comparison
-            final pickedMinutes = picked.hour * 60 + picked.minute;
-            final currentMinutes = currentTime.hour * 60 + currentTime.minute;
-            
-            // Check if selected date is today
-            final isToday = _selectedDate != null &&
-                _selectedDate!.year == now.year &&
-                _selectedDate!.month == now.month &&
-                _selectedDate!.day == now.day;
-            
-            // If it's today, check if time is at least 1 hour from now
-            if (isToday && pickedMinutes < (currentMinutes + 60)) {
-              _showSnackBar(
-                'Boarding time must be at least 1 hour from current time',
-                isError: true,
-              );
-              return;
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () async {
+            final TimeOfDay? picked = await showTimePicker(
+              context: context,
+              initialTime: _selectedTime ?? TimeOfDay.now(),
+            );
+            if (picked != null) {
+              // Get current time
+              final now = DateTime.now();
+              final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
+
+              // Convert TimeOfDay to minutes for comparison
+              final pickedMinutes = picked.hour * 60 + picked.minute;
+              final currentMinutes = currentTime.hour * 60 + currentTime.minute;
+
+              // Check if selected date is today
+              final isToday =
+                  _selectedDate != null &&
+                  _selectedDate!.year == now.year &&
+                  _selectedDate!.month == now.month &&
+                  _selectedDate!.day == now.day;
+
+              // If it's today, check if time is at least 1 hour from now
+              if (isToday && pickedMinutes < (currentMinutes + 60)) {
+                _showSnackBar(
+                  'Boarding time must be at least 1 hour from current time',
+                  isError: true,
+                );
+                return;
+              }
+
+              setState(() {
+                _selectedTime = picked;
+              });
             }
-            
-            setState(() {
-              _selectedTime = picked;
-            });
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey, width: 1),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _selectedTime != null
-                    ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
-                    : hint,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _selectedTime != null ? Colors.black : Colors.grey,
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey, width: 1),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _selectedTime != null
+                      ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                      : hint,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _selectedTime != null ? Colors.black : Colors.grey,
+                  ),
                 ),
-              ),
-              const Icon(Icons.access_time, color: Colors.grey, size: 20),
-            ],
+                const Icon(Icons.access_time, color: Colors.grey, size: 20),
+              ],
+            ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   // Widget _buildTimeField(String label, String hint) {
   //   return Column(

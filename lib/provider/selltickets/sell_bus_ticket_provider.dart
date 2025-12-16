@@ -1304,6 +1304,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/model/bus_ticket_model.dart';
 import 'package:backup_ticket/services/cloudinary_image_services.dart';
 import 'package:flutter/foundation.dart';

@@ -1,126 +1,85 @@
-// import 'package:shared_preferences/shared_preferences.dart';
 
-// class UserPreferences {
-//   static const String _keyUserId = 'userId';
-//   static const String _keyName = 'name';
-//   static const String _keyMobileNumber = 'mobileNumber';
-//   static const String _keyEmail = 'email';
-
-//   // Save user details
-//   static Future<void> saveUser({
-//     required String userId,
-//     required String name,
-//     required String mobileNumber,
-//     required String email,
-//   }) async {
-//     final prefs = await SharedPreferences.getInstance();
-//     await prefs.setString(_keyUserId, userId);
-//     await prefs.setString(_keyName, name);
-//     await prefs.setString(_keyMobileNumber, mobileNumber);
-//     await prefs.setString(_keyEmail, email);
-//   }
-
-//   // Getters
-//   static Future<String?> getUserId() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     return prefs.getString(_keyUserId);
-//   }
-
-//   static Future<String?> getName() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     return prefs.getString(_keyName);
-//   }
-
-//   static Future<String?> getMobileNumber() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     return prefs.getString(_keyMobileNumber);
-//   }
-
-//   static Future<String?> getEmail() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     return prefs.getString(_keyEmail);
-//   }
-
-//   // Clear user details
-//   static Future<void> clearUser() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     await prefs.remove(_keyUserId);
-//     await prefs.remove(_keyName);
-//     await prefs.remove(_keyMobileNumber);
-//     await prefs.remove(_keyEmail);
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// lib/utils/shared_prefs_helper.dart
+import 'package:backup_ticket/model/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-// Add your UserPreferences class here or import it
-class UserPreferences {
-  static const String _keyUserId = 'userId';
-  static const String _keyName = 'name';
-  static const String _keyMobileNumber = 'mobileNumber';
-  static const String _keyEmail = 'email';
+class SharedPrefsHelper {
+  static const String _keyToken = 'auth_token';
+  static const String _keyOtp = 'otp';
+  static const String _keyUser = 'user_data';
+  static const String _keyIsLoggedIn = 'is_logged_in';
 
-  // Save user details
-  static Future saveUser({
-    required String userId,
-    required String name,
-    required String mobileNumber,
-    required String email,
-  }) async {
+  // Save token
+  static Future<bool> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserId, userId);
-    await prefs.setString(_keyName, name);
-    await prefs.setString(_keyMobileNumber, mobileNumber);
-    await prefs.setString(_keyEmail, email);
+    return await prefs.setString(_keyToken, token);
   }
 
-  // Getters
-  static Future<String?> getUserId() async {
+  // Get token
+  static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserId);
+    return prefs.getString(_keyToken);
   }
 
-  static Future<String?> getName() async {
+  // Save OTP
+  static Future<bool> saveOtp(String otp) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyName);
+    return await prefs.setString(_keyOtp, otp);
   }
 
-  static Future<String?> getMobileNumber() async {
+  // Get OTP
+  static Future<String?> getOtp() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyMobileNumber);
+    return prefs.getString(_keyOtp);
   }
 
-  static Future<String?> getEmail() async {
+  // Save user data
+  static Future<bool> saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyEmail);
+    final userJson = jsonEncode(user.toJson());
+    return await prefs.setString(_keyUser, userJson);
   }
 
-  // Check if user is logged in
+  // Get user data
+  static Future<User?> getUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString(_keyUser);
+    if (userJson != null) {
+      return User.fromJson(jsonDecode(userJson));
+    }
+    return null;
+  }
+
+  // Save login status
+  static Future<bool> setLoggedIn(bool isLoggedIn) async {
+    final prefs = await SharedPreferences.getInstance();
+    return await prefs.setBool(_keyIsLoggedIn, isLoggedIn);
+  }
+
+  // Check if logged in
   static Future<bool> isLoggedIn() async {
-    final userId = await getUserId();
-    return userId != null && userId.isNotEmpty;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
 
-  // Clear user details
-  static Future clearUser() async {
+  // Save complete registration response
+  static Future<bool> saveRegistrationData(RegisterResponse response) async {
+    final tokenSaved = await saveToken(response.token);
+    final otpSaved = await saveOtp(response.otp);
+    final userSaved = await saveUser(response.user);
+    return tokenSaved && otpSaved && userSaved;
+  }
+
+  // Clear all data (logout)
+  static Future<bool> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyUserId);
-    await prefs.remove(_keyName);
-    await prefs.remove(_keyMobileNumber);
-    await prefs.remove(_keyEmail);
+    return await prefs.clear();
+  }
+
+  // Remove specific key
+  static Future<bool> remove(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return await prefs.remove(key);
   }
 }

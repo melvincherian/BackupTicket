@@ -1,4 +1,5 @@
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';

@@ -1,264 +1,151 @@
-// class UserModel {
-//   final String id;
-//   final String name;
-//   final String mobileNumber;
-//   final String email;
-
-//   UserModel({
-//     required this.id,
-//     required this.name,
-//     required this.mobileNumber,
-//     required this.email,
-//   });
-
-//   // Factory constructor to create a UserModel from JSON
-//   factory UserModel.fromJson(Map<String, dynamic> json) {
-//     return UserModel(
-//       id: json['id'] ?? '',
-//       name: json['name'] ?? '',
-//       mobileNumber: json['mobileNumber'] ?? '',
-//       email: json['email'] ?? '',
-//     );
-//   }
-
-//   // Convert UserModel to JSON
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'id': id,
-//       'name': name,
-//       'mobileNumber': mobileNumber,
-//       'email': email,
-//     };
-//   }
-// }
 
 
+// lib/models/register_model.dart
 
+class RegisterRequest {
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String phoneNumber;
+  final String password;
+  final String confirmPassword;
+  final String referralCode;
 
-
-
-
-
-
-
-
-
-
-
-
-
-// class Location {
-//   final double latitude;
-//   final double longitude;
-
-//   Location({
-//     required this.latitude,
-//     required this.longitude,
-//   });
-
-//   // Factory constructor to create Location from JSON
-//   factory Location.fromJson(Map<String, dynamic> json) {
-//     return Location(
-//       latitude: (json['latitude'] ?? 0.0).toDouble(),
-//       longitude: (json['longitude'] ?? 0.0).toDouble(),
-//     );
-//   }
-
-//   // Convert Location to JSON
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'latitude': latitude,
-//       'longitude': longitude,
-//     };
-//   }
-
-//   @override
-//   String toString() {
-//     return 'Location(latitude: $latitude, longitude: $longitude)';
-//   }
-// }
-
-// class UserModel {
-//   final String id;
-//   final String name;
-//   final String mobileNumber;
-//   final String email;
-//   final String?profileImage;
-//   final List<Location> locations;
-//   final String?referralCode;
-//   final String? referredBy; 
-//   final int? wallet;
-
-//   UserModel({
-//     required this.id,
-//     required this.name,
-//     required this.mobileNumber,
-//     required this.email,
-//     required this.locations,
-//     this.profileImage,
-//     this.referralCode,
-//     this.referredBy,
-//     this.wallet,
-//   });
-
-//   // Factory constructor to create a UserModel from JSON
-//   factory UserModel.fromJson(Map<String, dynamic> json) {
-//     List<Location> locationList = [];
-//     if (json['locations'] != null) {
-//       locationList = (json['locations'] as List)
-//           .map((locationJson) => Location.fromJson(locationJson))
-//           .toList();
-//     }
-
-//     return UserModel(
-//       id: json['id'] ?? '',
-//       name: json['name'] ?? '',
-//       mobileNumber: json['mobileNumber'] ?? '',
-//       email: json['email'] ?? '',
-//       profileImage: json['profileImage'],
-//       locations: locationList,
-
-//       referralCode: json['referralCode'] ?? '',
-//       referredBy: json['referredBy'],
-//       wallet: json['wallet'] ?? 0,
-//     );
-//   }
-
-//   // Convert UserModel to JSON
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'id': id,
-//       'name': name,
-//       'mobileNumber': mobileNumber,
-//       'email': email,
-//       'profileImage':profileImage,
-//       'locations': locations.map((location) => location.toJson()).toList(),
-//        'referralCode': referralCode,
-//       'referredBy': referredBy,
-//       'wallet': wallet,
-//     };
-//   }
-
-//   @override
-//   // String toString() {
-//   //   return 'UserModel(id: $id, name: $name, mobileNumber: $mobileNumber, email: $email, locations: $locations)';
-//   // }
-
-//    String toString() {
-//     return 'UserModel(id: $id, name: $name, mobileNumber: $mobileNumber, '
-//            'email: $email, referralCode: $referralCode, referredBy: $referredBy, '
-//            'wallet: $wallet, locations: $locations)';
-//   }
-// }
-
-
-
-
-
-
-
-
-
-class Location {
-  final double latitude;
-  final double longitude;
-
-  Location({
-    required this.latitude,
-    required this.longitude,
+  RegisterRequest({
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.phoneNumber,
+    required this.password,
+    required this.confirmPassword,
+    this.referralCode = '',
   });
 
-  // Factory constructor to create Location from JSON
-  factory Location.fromJson(Map<String, dynamic> json) {
-    return Location(
-      latitude: (json['latitude'] ?? 0.0).toDouble(),
-      longitude: (json['longitude'] ?? 0.0).toDouble(),
-    );
-  }
-
-  // Convert Location to JSON
   Map<String, dynamic> toJson() {
     return {
-      'latitude': latitude,
-      'longitude': longitude,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'password': password,
+      'confirmPassword': confirmPassword,
+      'referralCode': referralCode,
     };
-  }
-
-  @override
-  String toString() {
-    return 'Location(latitude: $latitude, longitude: $longitude)';
   }
 }
 
-class UserModel {
-  final String id;
-  final String name;
-  final String mobileNumber;
-  final String email;
-  final String? password; // Added password field
-  // final String? profileImage;
-  final List<Location> locations;
-  final String? referralCode;
-  final String? referredBy; 
-  final int? wallet;
+class RegisterResponse {
+  final bool success;
+  final String message;
+  final String otp;
+  final String token;
+  final User user;
 
-  UserModel({
-    required this.id,
-    required this.name,
-    required this.mobileNumber,
-    required this.email,
-    required this.locations,
-    this.password, // Added password parameter
-    // this.profileImage,
-    this.referralCode,
-    this.referredBy,
-    this.wallet,
+  RegisterResponse({
+    required this.success,
+    required this.message,
+    required this.otp,
+    required this.token,
+    required this.user,
   });
 
-  // Factory constructor to create a UserModel from JSON
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    List<Location> locationList = [];
-    if (json['locations'] != null) {
-      locationList = (json['locations'] as List)
-          .map((locationJson) => Location.fromJson(locationJson))
-          .toList();
-    }
-
-    return UserModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      mobileNumber: json['mobileNumber'] ?? '',
-      email: json['email'] ?? '',
-      password: json['password'], // Added password from JSON
-      // profileImage: json['profileImage'],
-      locations: locationList,
-      referralCode: json['referralCode'] ?? '',
-      referredBy: json['referredBy'],
-      wallet: json['wallet'] ?? 0,
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    return RegisterResponse(
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      otp: json['otp'] ?? '',
+      token: json['token'] ?? '',
+      user: User.fromJson(json['user'] ?? {}),
     );
   }
 
-  // Convert UserModel to JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'mobileNumber': mobileNumber,
-      'email': email,
-      'password': password, // Added password to JSON
-      // 'profileImage': profileImage,
-      'locations': locations.map((location) => location.toJson()).toList(),
-      'referralCode': referralCode,
-      'referredBy': referredBy,
-      'wallet': wallet,
+      'success': success,
+      'message': message,
+      'otp': otp,
+      'token': token,
+      'user': user.toJson(),
     };
   }
+}
 
-  @override
-  String toString() {
-    return 'UserModel(id: $id, name: $name, mobileNumber: $mobileNumber, '
-           'email: $email, referralCode: $referralCode, referredBy: $referredBy, '
-           'wallet: $wallet, locations: $locations)';
-    // Note: Password is intentionally excluded from toString() for security
+class User {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String fullName;
+  final String email;
+  final String phoneNumber;
+  final String password;
+  final String? profileImage;
+  final String? profileImageId;
+  final String referralCode;
+  final String? usedReferralCode;
+  final String? referredBy;
+  final int referralCount;
+  final List<dynamic> notifications;
+  final String createdAt;
+  final String updatedAt;
+
+  User({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.fullName,
+    required this.email,
+    required this.phoneNumber,
+    required this.password,
+    this.profileImage,
+    this.profileImageId,
+    required this.referralCode,
+    this.usedReferralCode,
+    this.referredBy,
+    required this.referralCount,
+    required this.notifications,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['_id'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      fullName: json['fullName'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      password: json['password'] ?? '',
+      profileImage: json['profileImage'],
+      profileImageId: json['profileImageId'],
+      referralCode: json['referralCode'] ?? '',
+      usedReferralCode: json['usedReferralCode'],
+      referredBy: json['referredBy'],
+      referralCount: json['referralCount'] ?? 0,
+      notifications: json['notifications'] ?? [],
+      createdAt: json['createdAt'] ?? '',
+      updatedAt: json['updatedAt'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'firstName': firstName,
+      'lastName': lastName,
+      'fullName': fullName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'password': password,
+      'profileImage': profileImage,
+      'profileImageId': profileImageId,
+      'referralCode': referralCode,
+      'usedReferralCode': usedReferralCode,
+      'referredBy': referredBy,
+      'referralCount': referralCount,
+      'notifications': notifications,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
   }
 }

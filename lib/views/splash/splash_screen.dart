@@ -783,6 +783,7 @@
 
 
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:backup_ticket/views/navbar/navbar_screen.dart';
 import 'package:flutter/material.dart';
@@ -910,7 +911,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkLoginAndNavigate() async {
     try {
-      final isLoggedIn = await UserPreferences.isLoggedIn();
+      final isLoggedIn = await SharedPrefsHelper.isLoggedIn();
 
       if (mounted) {
         if (isLoggedIn) {

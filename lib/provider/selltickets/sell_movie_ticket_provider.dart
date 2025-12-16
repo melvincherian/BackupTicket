@@ -1495,6 +1495,7 @@
 
 import 'dart:io';
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/model/movie_ticket_model.dart';
 import 'package:backup_ticket/services/cloudinary_image_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

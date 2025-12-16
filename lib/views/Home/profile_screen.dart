@@ -1,4 +1,5 @@
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:backup_ticket/views/deleteaccount/delete_account.dart';
@@ -27,21 +28,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadUserProfile();
   }
-
-  // Future<void> _loadUserProfile() async {
-  //   try {
-  //     String? userId = await UserPreferences.getUserId();
-  //     if (userId != null && userId.isNotEmpty && mounted) {
-  //       final profileProvider = Provider.of<UserProfileProvider>(
-  //         context,
-  //         listen: false,
-  //       );
-  //       await profileProvider.loadUserProfile(userId);
-  //     }
-  //   } catch (e) {
-  //     print('Error loading user profile: $e');
-  //   }
-  // }
 
   Future<void> _loadUserProfile() async {
     try {
@@ -366,19 +352,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
 
-                          _buildMenuItem(
-                            icon: Icons.movie,
-                            iconColor: const Color(0xFF06B6D4),
-                            title: 'Movies',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const CreateMovie(),
-                                ),
-                              );
-                            },
-                          ),
+                          // _buildMenuItem(
+                          //   icon: Icons.movie,
+                          //   iconColor: const Color(0xFF06B6D4),
+                          //   title: 'Movies',
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) => const CreateMovie(),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
                           const SizedBox(height: 24),
 
                           // Support & Settings section

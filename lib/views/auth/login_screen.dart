@@ -321,25 +321,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:backup_ticket/provider/auth/login_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -358,6 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -388,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onLoginPressed() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<LoginProvider>(context, listen: false);
-      
+
       // Clear any previous errors
       authProvider.clearError();
 
@@ -401,9 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to home screen on successful login
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => NavbarScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => NavbarScreen()),
         );
       } else if (mounted && authProvider.errorMessage != null) {
         // Show error message
@@ -451,7 +431,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 8),
                             const Text(
                               'Hey! Good to see you again',
-                              style: TextStyle(fontSize: 16, color: Colors.black),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                             ),
 
                             const SizedBox(height: 50),
@@ -526,7 +509,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: TextFormField(
                                 controller: _passwordController,
                                 validator: _validatePassword,
-                                obscureText: true,
+                                obscureText: !_isPasswordVisible,
                                 enabled: !authProvider.isLoading,
                                 decoration: InputDecoration(
                                   hintText: 'Enter your password',
@@ -538,6 +521,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Icons.lock,
                                     color: Colors.grey.shade500,
                                   ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                    onPressed: authProvider.isLoading
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _isPasswordVisible =
+                                                  !_isPasswordVisible;
+                                            });
+                                          },
+                                  ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -545,6 +544,58 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
+                              // child: TextFormField(
+                              //   controller: _passwordController,
+                              //   validator: _validatePassword,
+                              //   obscureText: true,
+                              //   enabled: !authProvider.isLoading,
+                              //   decoration: InputDecoration(
+                              //     hintText: 'Enter your password',
+                              //     hintStyle: TextStyle(
+                              //       color: Colors.grey.shade500,
+                              //       fontSize: 16,
+                              //     ),
+                              //     prefixIcon: Icon(
+                              //       Icons.lock,
+                              //       color: Colors.grey.shade500,
+                              //     ),
+                              //     border: InputBorder.none,
+                              //     contentPadding: const EdgeInsets.symmetric(
+                              //       horizontal: 16,
+                              //       vertical: 16,
+                              //     ),
+                              //   ),
+                              // ),
+                            ),
+
+                            SizedBox(height: 16),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                GestureDetector(
+                                  onTap: authProvider.isLoading
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ForgotPasswordScreen(),
+                                            ),
+                                          );
+                                        },
+                                  child: Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      color: authProvider.isLoading
+                                          ? Colors.grey
+                                          : const Color(0xFF4A6CF7),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
 
                             const SizedBox(height: 30),
@@ -556,14 +607,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF214194), Color(0xFF3F7EF3)],
+                                    colors: [
+                                      Color(0xFF214194),
+                                      Color(0xFF3F7EF3),
+                                    ],
                                     begin: Alignment.centerLeft,
                                     end: Alignment.centerRight,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: authProvider.isLoading ? null : _onLoginPressed,
+                                  onPressed: authProvider.isLoading
+                                      ? null
+                                      : _onLoginPressed,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     shadowColor: Colors.transparent,
@@ -603,7 +659,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF214194), Color(0xFF3F7EF3)],
+                                    colors: [
+                                      Color(0xFF214194),
+                                      Color(0xFF3F7EF3),
+                                    ],
                                     begin: Alignment.centerLeft,
                                     end: Alignment.centerRight,
                                   ),
@@ -616,7 +675,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           Navigator.pushReplacement(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => NavbarScreen(),
+                                              builder: (context) =>
+                                                  NavbarScreen(),
                                             ),
                                           );
                                         },
@@ -654,7 +714,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => const SignupScreen(),
+                                              builder: (context) =>
+                                                  const SignupScreen(),
                                             ),
                                           );
                                         },
@@ -672,34 +733,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             const SizedBox(height: 20),
-
-                            // Row(
-                            //   mainAxisAlignment: MainAxisAlignment.end,
-                            //   children: [
-                            //     GestureDetector(
-                            //       onTap: authProvider.isLoading
-                            //           ? null
-                            //           : () {
-                            //               Navigator.push(
-                            //                 context,
-                            //                 MaterialPageRoute(
-                            //                   builder: (context) =>
-                            //                       const ForgotPasswordScreen(),
-                            //                 ),
-                            //               );
-                            //             },
-                            //       child: Text(
-                            //         'Forgot Password?',
-                            //         style: TextStyle(
-                            //           color: authProvider.isLoading
-                            //               ? Colors.grey
-                            //               : const Color(0xFF4A6CF7),
-                            //           fontWeight: FontWeight.bold,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
                           ],
                         ),
                       ),

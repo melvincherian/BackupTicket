@@ -981,10 +981,18 @@ class _TrainScreenState extends State<TrainScreen>
 
   String _userName = "Guest";
 
+
+      bool isGuest = true;
+  bool isLoading = true;
+  String? userName;
+  String? userProfileImage;
+
+
   @override
   void initState() {
     super.initState();
-    _loadUserName();
+    _loadUserProfile();
+    // _loadUserName();
 
     // Train movement animation
     _trainController = AnimationController(
@@ -1035,6 +1043,40 @@ class _TrainScreenState extends State<TrainScreen>
     _pulseController.dispose();
     _smokeController.dispose();
     super.dispose();
+  }
+
+
+
+
+      Future<void> _loadUserProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final user = await SharedPrefsHelper.getUser();
+      final isLoggedIn = await SharedPrefsHelper.isLoggedIn();
+
+      setState(() {
+        isGuest = !isLoggedIn || user == null;
+        if (!isGuest && user != null) {
+          userName = user.fullName;
+          userProfileImage = user.profileImage;
+        } else {
+          userName = null;
+          userProfileImage = null;
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user profile: $e');
+      setState(() {
+        isGuest = true;
+        userName = null;
+        userProfileImage = null;
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadUserName() async {
@@ -1121,7 +1163,7 @@ class _TrainScreenState extends State<TrainScreen>
                               ),
                             ),
                             Text(
-                              _userName,
+                              userName.toString(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,

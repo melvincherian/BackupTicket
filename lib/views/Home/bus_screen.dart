@@ -42,15 +42,53 @@ class _BusScreenState extends State<BusScreen> {
   double _maxPrice = 5000;
   double _minPrice = 0;
   Set<String> _selectedBusTypes = {};
-  String _sortBy = 'none'; // none, price_low, price_high, time_early, time_late
+  String _sortBy = 'none'; 
+    bool isGuest = true;
+  bool isLoading = true;
+  String? userName;
+  String? userProfileImage;
 
   @override
   void initState() {
+    _loadUserProfile();
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadTickets();
       _loadUserName();
     });
+  }
+
+
+
+    Future<void> _loadUserProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final user = await SharedPrefsHelper.getUser();
+      final isLoggedIn = await SharedPrefsHelper.isLoggedIn();
+
+      setState(() {
+        isGuest = !isLoggedIn || user == null;
+        if (!isGuest && user != null) {
+          userName = user.fullName;
+          userProfileImage = user.profileImage;
+        } else {
+          userName = null;
+          userProfileImage = null;
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user profile: $e');
+      setState(() {
+        isGuest = true;
+        userName = null;
+        userProfileImage = null;
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadUserName() async {
@@ -937,7 +975,7 @@ class _BusScreenState extends State<BusScreen> {
                               ),
                             ),
                             Text(
-                              _userName,
+                              userName.toString(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,

@@ -47,6 +47,9 @@ class MovieTicketProviderapi extends ChangeNotifier {
     try {
 
       print('bhgbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+
+            print('imaaaaaaaaaaaaaaaaaaaaaaaaaaaaageeeeeeeeeeeeeeeeeeeeeeeeeem$ticketImage');
+
       _createdTicket = await MovieTicketService.createMovieTicket(
         userId: userId,
         movieId: movieId,
@@ -67,6 +70,8 @@ class MovieTicketProviderapi extends ChangeNotifier {
         termsAndConditionsAccepted: termsAndConditionsAccepted,
         ticketImage: ticketImage,
       );
+
+
 
       _isCreating = false;
       notifyListeners();

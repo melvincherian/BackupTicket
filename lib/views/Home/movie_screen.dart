@@ -398,6 +398,7 @@
 //   }
 // }
 
+import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/model/ongoing_movie_model.dart';
 import 'package:backup_ticket/provider/ongoing/ongoing_movie_provider.dart';
 import 'package:flutter/material.dart';
@@ -420,6 +421,59 @@ class _MovieScreenState extends State<MovieScreen> {
   int _currentPage = 0;
 
   final String _userName = "Guest";
+
+    bool isGuest = true;
+  bool isLoading = true;
+  String? userName;
+  String? userProfileImage;
+
+
+
+static const String ticketImageBaseUrl =
+    "http://31.97.206.144:8127";
+
+
+
+    String getTicketImageUrl(String imagePath) {
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  return "$ticketImageBaseUrl$imagePath";
+}
+
+
+
+    Future<void> _loadUserProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final user = await SharedPrefsHelper.getUser();
+      final isLoggedIn = await SharedPrefsHelper.isLoggedIn();
+
+      setState(() {
+        isGuest = !isLoggedIn || user == null;
+        if (!isGuest && user != null) {
+          userName = user.fullName;
+          userProfileImage = user.profileImage;
+        } else {
+          userName = null;
+          userProfileImage = null;
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user profile: $e');
+      setState(() {
+        isGuest = true;
+        userName = null;
+        userProfileImage = null;
+        isLoading = false;
+      });
+    }
+  }
+
 
   final List<Map<String, dynamic>> _categories = [
     {
@@ -466,6 +520,7 @@ class _MovieScreenState extends State<MovieScreen> {
 
   @override
   void initState() {
+       _loadUserProfile();
     super.initState();
     _pageController.addListener(() {
       setState(() {
@@ -564,7 +619,7 @@ class _MovieScreenState extends State<MovieScreen> {
                             ),
                           ),
                           Text(
-                            _userName,
+                            userName.toString(),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -822,7 +877,7 @@ class _MovieScreenState extends State<MovieScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              movie.ticketImage,
+               getTicketImageUrl(movie.ticketImage),
               fit: BoxFit.cover,
               width: double.infinity,
               errorBuilder: (context, error, stackTrace) {
@@ -1025,93 +1080,177 @@ class _MovieScreenState extends State<MovieScreen> {
     );
   }
 
-  Widget _buildApiTicketCard(OngoingMovie movie) {
-    return GestureDetector(
-      onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (_) => DetailScreen(
-        //       movieName: movie.movieName,
-        //       pricePerTicket: movie.pricePerTicket.toDouble(),
-        //     ),
-        //   ),
-        // );
+  // Widget _buildApiTicketCard(OngoingMovie movie) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       // Navigator.push(
+  //       //   context,
+  //       //   MaterialPageRoute(
+  //       //     builder: (_) => DetailScreen(
+  //       //       movieName: movie.movieName,
+  //       //       pricePerTicket: movie.pricePerTicket.toDouble(),
+  //       //     ),
+  //       //   ),
+  //       // );
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ImageDetailScreen(
-              movieName: movie.movieName,
-              categoryId: movie.id,
-              assetImagePath: movie.ticketImage,
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => ImageDetailScreen(
+  //             movieName: movie.movieName,
+  //             categoryId: movie.id,
+  //             assetImagePath: movie.ticketImage,
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //     child: Container(
+  //       margin: const EdgeInsets.only(bottom: 12),
+  //       padding: const EdgeInsets.all(12),
+  //       decoration: BoxDecoration(
+  //         border: Border.all(),
+  //         color: Colors.white,
+  //         borderRadius: BorderRadius.circular(12),
+  //       ),
+  //       child: Row(
+  //         children: [
+  //           ClipRRect(
+  //             borderRadius: BorderRadius.circular(6),
+  //             child: Image.network(
+  //               movie.ticketImage,
+  //               width: 60,
+  //               height: 80,
+  //               fit: BoxFit.cover,
+  //               errorBuilder: (context, error, stackTrace) {
+  //                 return Container(
+  //                   width: 60,
+  //                   height: 80,
+  //                   color: Colors.grey[300],
+  //                   child: Icon(Icons.movie, color: Colors.grey[600]),
+  //                 );
+  //               },
+  //             ),
+  //           ),
+  //           const SizedBox(width: 12),
+  //           Expanded(
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   movie.movieName,
+  //                   style: const TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                 ),
+  //                 Text(
+  //                   movie.language,
+  //                   style: const TextStyle(color: Colors.grey),
+  //                 ),
+  //                 Text(
+  //                   "${_formatDate(movie.showDate)}  ${movie.showTime}",
+  //                   style: const TextStyle(fontWeight: FontWeight.bold),
+  //                 ),
+  //                 Text(
+  //                   movie.theatrePlace,
+  //                   style: const TextStyle(color: Colors.grey),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           Text(
+  //             "₹${movie.totalPrice}",
+  //             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
+  Widget _buildApiTicketCard(OngoingMovie movie) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ImageDetailScreen(
+            movieName: movie.movieName,
+            categoryId: movie.id,
+            assetImagePath: getTicketImageUrl(movie.ticketImage),
+          ),
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.network(
+              getTicketImageUrl(movie.ticketImage),
+              width: 60,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 60,
+                  height: 80,
+                  color: Colors.grey[300],
+                  child: Icon(Icons.movie, color: Colors.grey[600]),
+                );
+              },
             ),
           ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.network(
-                movie.ticketImage,
-                width: 60,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 60,
-                    height: 80,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.movie, color: Colors.grey[600]),
-                  );
-                },
-              ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  movie.movieName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  movie.language,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                Text(
+                  "${_formatDate(movie.showDate)}  ${movie.showTime}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  movie.theatrePlace,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.movieName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    movie.language,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  Text(
-                    "${_formatDate(movie.showDate)}  ${movie.showTime}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    movie.theatrePlace,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
+          ),
+          Text(
+            "₹${movie.totalPrice}",
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
-            Text(
-              "₹${movie.totalPrice}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   String _formatDate(DateTime date) {
     final months = [

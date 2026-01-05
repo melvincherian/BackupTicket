@@ -387,6 +387,7 @@ class NavbarScreen extends StatelessWidget {
     SellScreen(),   
     TrainScreen(),  
     ProfileScreen(),
+    
   ];
 
   @override

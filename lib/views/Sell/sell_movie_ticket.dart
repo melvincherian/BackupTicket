@@ -2580,6 +2580,130 @@ Future<void> _loadUserData() async {
     }
   }
 
+
+
+
+  void _showTermsAndConditionsDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          'Terms and Conditions',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTermsSection(
+                  'Ticket Authenticity',
+                  'You confirm that the ticket being sold is genuine and has been legally purchased. Any fraudulent tickets will result in account suspension.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Platform Commission',
+                  'A 10% platform fee will be deducted from the total ticket price. The remaining amount will be transferred to your account after successful sale.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Ticket Verification',
+                  'All tickets are subject to verification by our team. We reserve the right to reject tickets that do not meet our standards.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Cancellation Policy',
+                  'Once a ticket is sold, it cannot be cancelled. Ensure all details are correct before listing.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Payment Terms',
+                  'Payment will be processed within 24-48 hours after the movie show time has passed and buyer confirmation is received.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Liability',
+                  'The platform is not responsible for any disputes between buyer and seller. Users are responsible for providing accurate ticket information.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Prohibited Activities',
+                  'Selling counterfeit tickets, price manipulation, or any fraudulent activities are strictly prohibited and may result in legal action.',
+                ),
+                const SizedBox(height: 16),
+                _buildTermsSection(
+                  'Data Privacy',
+                  'Your personal information will be used only for transaction purposes and will not be shared with third parties without consent.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Decline',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _agreeToTerms = true;
+              });
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF214194),
+            ),
+            child: const Text(
+              'Accept',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+Widget _buildTermsSection(String title, String content) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 15,
+          color: Color(0xFF214194),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        content,
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.grey.shade700,
+          height: 1.4,
+        ),
+      ),
+    ],
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2800,10 +2924,10 @@ Future<void> _loadUserData() async {
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
-                    'Share your ticket link',
+                    'Share your ticket link(Mandatory)',
                     'Enter QR code link',
                     _qrCodeLinkController,
-                    required: false,
+                    required: true,
                   ),
                   const SizedBox(height: 16),
                   _buildImagePicker(),
@@ -3317,29 +3441,71 @@ Future<void> _loadUserData() async {
     );
   }
 
+  // Widget _buildTermsCheckbox() {
+  //   return Row(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Checkbox(
+  //         value: _agreeToTerms,
+  //         onChanged: (value) {
+  //           setState(() {
+  //             _agreeToTerms = value ?? false;
+  //           });
+  //         },
+  //         activeColor: const Color(0xFF214194),
+  //       ),
+  //       const Expanded(
+  //         child: Padding(
+  //           padding: EdgeInsets.only(top: 12),
+  //           child: Text(
+  //             'I agree to the terms and conditions',
+  //             style: TextStyle(fontSize: 13, color: Colors.black87),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+
   Widget _buildTermsCheckbox() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Checkbox(
-          value: _agreeToTerms,
-          onChanged: (value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Checkbox(
+        value: _agreeToTerms,
+        onChanged: (value) {
+          if (value == true) {
+            _showTermsAndConditionsDialog();
+          } else {
             setState(() {
-              _agreeToTerms = value ?? false;
+              _agreeToTerms = false;
             });
+          }
+        },
+        activeColor: const Color(0xFF214194),
+      ),
+      Expanded(
+        child: InkWell(
+          onTap: () {
+            if (!_agreeToTerms) {
+              _showTermsAndConditionsDialog();
+            } 
           },
-          activeColor: const Color(0xFF214194),
-        ),
-        const Expanded(
-          child: Padding(
+          child: const Padding(
             padding: EdgeInsets.only(top: 12),
             child: Text(
               'I agree to the terms and conditions',
-              style: TextStyle(fontSize: 13, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 }

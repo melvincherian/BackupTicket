@@ -498,7 +498,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // FIRST NAME
                             const Text('First Name',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _firstNameController,
@@ -511,7 +511,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // LAST NAME
                             const Text('Last Name',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _lastNameController,
@@ -524,7 +524,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // PHONE
                             const Text('Mobile Number',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _phoneController,
@@ -538,7 +538,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // EMAIL
                             const Text('E-mail',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _emailController,
@@ -552,7 +552,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // REFERRAL
                             const Text('Referral Code (Optional)',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _referralController,
@@ -564,7 +564,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // PASSWORD
                             const Text('Password',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
@@ -604,7 +604,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             // CONFIRM PASSWORD
                             const Text('Confirm Password',
                                 style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(

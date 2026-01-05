@@ -1,4 +1,3 @@
-
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
@@ -24,11 +23,15 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
 
   String _userName = "Guest";
 
+  bool isGuest = true;
+  bool isLoading = true;
+  String? userName;
+  String? userProfileImage;
+
   @override
   void initState() {
-    _loadUserName();
     super.initState();
-
+    _loadUserProfile();
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -53,11 +56,42 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
     _slideController.forward();
   }
 
-  Future<void> _loadUserName() async {
-    final name = await UserPreferences.getName();
-    if (mounted && name != null && name.isNotEmpty) {
+  // Future<void> _loadUserName() async {
+  //   final name = await UserPreferences.getName();
+  //   if (mounted && name != null && name.isNotEmpty) {
+  //     setState(() {
+  //       _userName = name;
+  //     });
+  //   }
+  // }
+
+  Future<void> _loadUserProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final user = await SharedPrefsHelper.getUser();
+      final isLoggedIn = await SharedPrefsHelper.isLoggedIn();
+
       setState(() {
-        _userName = name;
+        isGuest = !isLoggedIn || user == null;
+        if (!isGuest && user != null) {
+          userName = user.fullName;
+          userProfileImage = user.profileImage;
+        } else {
+          userName = null;
+          userProfileImage = null;
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user profile: $e');
+      setState(() {
+        isGuest = true;
+        userName = null;
+        userProfileImage = null;
+        isLoading = false;
       });
     }
   }
@@ -144,7 +178,7 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
                               ),
                             ),
                             Text(
-                              _userName,
+                              userName.toString(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -197,7 +231,11 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color.fromARGB(255, 235, 236, 244), Color.fromARGB(255, 224, 225, 244), Color.fromARGB(255, 224, 225, 244)],
+            colors: [
+              Color.fromARGB(255, 235, 236, 244),
+              Color.fromARGB(255, 224, 225, 244),
+              Color.fromARGB(255, 224, 225, 244),
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -374,11 +412,14 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
           },
         ),
 
-               SizedBox(height: 20,),
-                _AnimatedTicketCard(
+        SizedBox(height: 20),
+        _AnimatedTicketCard(
           delay: 200, // Slightly more delay to animate after bus card
           gradient: const LinearGradient(
-            colors: [Color(0xFF43A047), Color(0xFF2E7D32)], // Greenish gradient for train
+            colors: [
+              Color(0xFF43A047),
+              Color(0xFF2E7D32),
+            ], // Greenish gradient for train
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -388,7 +429,9 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TrainScreen()), // Create this screen
+              MaterialPageRoute(
+                builder: (context) => TrainScreen(),
+              ), // Create this screen
             );
           },
         ),

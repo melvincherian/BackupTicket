@@ -62,6 +62,9 @@ dependencies:
   crypto: ^3.0.7
   http: ^1.6.0
   dio: ^5.9.0
+  media_scanner: ^2.2.0
+  open_filex: ^4.7.0
+  flutter_pdfview: ^1.4.3
 
 dev_dependencies:
   flutter_test:
@@ -121,6 +124,9 @@ flutter:
     - assets\ogposter.jpg
     - assets\mirai.jpeg
     - assets\littlehearts.jpg
+    - assets\sample.png
+    - assets\appstore.png
+
     # - assets\no-notifications-animation-gif-download-4323106.webp
     
   #   - images/a_dot_ham.jpeg

@@ -10,7 +10,7 @@ class ApiConstants {
   static const String createMovie='$baseUrl/api/admin/createmovie/:userId';
   static const String getmovienames='$baseUrl/api/admin/allmovienames';
   static const String singleMovieticket='$baseUrl/api/admin/singlemovieticket/:ticketId';
-  static const String allmovietickets='$baseUrl/api/admin/allmovieticekts/:userId';
+  static const String allmovietickets='$baseUrl/api/admin/allmovieticekts';
   static const String addtoCart='$baseUrl/api/auth/addtocart';
   static const String getCart='$baseUrl/api/auth/getcart/:userId';
   static const String postedTicktes='$baseUrl/api/auth/mypostedticket/:userId';

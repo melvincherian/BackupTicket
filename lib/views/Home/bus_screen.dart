@@ -7,6 +7,7 @@ import 'package:backup_ticket/provider/selltickets/sell_bus_ticket_provider.dart
 import 'package:backup_ticket/model/bus_ticket_model.dart';
 import 'package:backup_ticket/views/busdetails/bus_details_screen.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
+import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:extended_image/extended_image.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -1023,607 +1024,532 @@ class _BusScreenState extends State<BusScreen> {
         ),
       ),
       backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.all(16.0),
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.15),
-                            spreadRadius: 1,
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
+      body: PopScope(
+                    canPop: false,
+           onPopInvoked: (didPop) async {
+        if (didPop) return;
+
+        final shouldExit = await showBackConfirmDialog(context);
+        if (shouldExit) {
+          Navigator.of(context).pop(); // exits app / screen
+        }
+      },
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.15),
+                              spreadRadius: 1,
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.trip_origin,
-                                      color: Color(0xFF1976D2),
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _fromController,
-                                        decoration: const InputDecoration(
-                                          hintText: 'From',
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 16,
-                                          ),
-                                          border: InputBorder.none,
-                                        ),
-                                        onChanged: (value) {
-                                          _updateFromSuggestions(value);
-                                        },
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.trip_origin,
+                                        color: Color(0xFF1976D2),
+                                        size: 20,
                                       ),
-                                    ),
-                                    if (_fromController.text.isNotEmpty)
-                                      IconButton(
-                                        icon: const Icon(Icons.clear, size: 18),
-                                        onPressed: () {
-                                          setState(() {
-                                            _fromController.clear();
-                                            _fromLocation = '';
-                                            _showFromSuggestions = false;
-                                          });
-                                        },
-                                      ),
-                                  ],
-                                ),
-                                if (_showFromSuggestions)
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      maxHeight: 200,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border(
-                                        top: BorderSide(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                    ),
-                                    child: ListView.builder(
-                                      shrinkWrap: true,
-                                      padding: EdgeInsets.zero,
-                                      itemCount: _fromSuggestions.length,
-                                      itemBuilder: (context, index) {
-                                        final suggestion =
-                                            _fromSuggestions[index];
-                                        return ListTile(
-                                          dense: true,
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                          leading: const Icon(
-                                            Icons.location_on,
-                                            size: 20,
-                                            color: Color(0xFF1976D2),
-                                          ),
-                                          title: Text(
-                                            suggestion['main_text'],
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          subtitle: Text(
-                                            suggestion['description'],
-                                            style: const TextStyle(
-                                              fontSize: 12,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _fromController,
+                                          decoration: const InputDecoration(
+                                            hintText: 'From',
+                                            hintStyle: TextStyle(
                                               color: Colors.grey,
+                                              fontSize: 16,
                                             ),
+                                            border: InputBorder.none,
                                           ),
-                                          onTap: () {
+                                          onChanged: (value) {
+                                            _updateFromSuggestions(value);
+                                          },
+                                        ),
+                                      ),
+                                      if (_fromController.text.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.clear, size: 18),
+                                          onPressed: () {
                                             setState(() {
-                                              _fromController.text =
-                                                  suggestion['main_text'];
-                                              _fromLocation =
-                                                  suggestion['main_text']
-                                                      .toLowerCase();
+                                              _fromController.clear();
+                                              _fromLocation = '';
                                               _showFromSuggestions = false;
                                             });
                                           },
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                    ],
                                   ),
-                              ],
-                            ),
-                          ),
-                          // Container(
-                          //   padding:
-                          //       const EdgeInsets.symmetric(horizontal: 12.0),
-                          //   decoration: BoxDecoration(
-                          //     border: Border.all(color: Colors.grey.shade300),
-                          //     borderRadius: BorderRadius.circular(12),
-                          //   ),
-                          //   child: Row(
-                          //     children: [
-                          //       const Icon(Icons.trip_origin,
-                          //           color: Color(0xFF1976D2), size: 20),
-                          //       const SizedBox(width: 12),
-                          //       Expanded(
-                          //         child: TextField(
-                          //           controller: _fromController,
-                          //           decoration: const InputDecoration(
-                          //             hintText: 'From',
-                          //             hintStyle: TextStyle(
-                          //                 color: Colors.grey, fontSize: 16),
-                          //             border: InputBorder.none,
-                          //           ),
-                          //           onChanged: (value) {
-                          //             setState(() {
-                          //               _fromLocation = value.toLowerCase();
-                          //             });
-                          //           },
-                          //         ),
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
-                          const SizedBox(height: 12),
-
-                          // Container(
-                          //   padding:
-                          //       const EdgeInsets.symmetric(horizontal: 12.0),
-                          //   decoration: BoxDecoration(
-                          //     border: Border.all(color: Colors.grey.shade300),
-                          //     borderRadius: BorderRadius.circular(12),
-                          //   ),
-                          //   child: Row(
-                          //     children: [
-                          //       const Icon(Icons.location_on,
-                          //           color: Colors.red, size: 20),
-                          //       const SizedBox(width: 12),
-                          //       Expanded(
-                          //         child: TextField(
-                          //           controller: _toController,
-                          //           decoration: const InputDecoration(
-                          //             hintText: 'To',
-                          //             hintStyle: TextStyle(
-                          //                 color: Colors.grey, fontSize: 16),
-                          //             border: InputBorder.none,
-                          //           ),
-                          //           onChanged: (value) {
-                          //             setState(() {
-                          //               _toLocation = value.toLowerCase();
-                          //             });
-                          //           },
-                          //         ),
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _toController,
-                                        decoration: const InputDecoration(
-                                          hintText: 'To',
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 16,
+                                  if (_showFromSuggestions)
+                                    Container(
+                                      constraints: const BoxConstraints(
+                                        maxHeight: 200,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border(
+                                          top: BorderSide(
+                                            color: Colors.grey.shade300,
                                           ),
-                                          border: InputBorder.none,
-                                        ),
-                                        onChanged: (value) {
-                                          _updateToSuggestions(value);
-                                        },
-                                      ),
-                                    ),
-                                    if (_toController.text.isNotEmpty)
-                                      IconButton(
-                                        icon: const Icon(Icons.clear, size: 18),
-                                        onPressed: () {
-                                          setState(() {
-                                            _toController.clear();
-                                            _toLocation = '';
-                                            _showToSuggestions = false;
-                                          });
-                                        },
-                                      ),
-                                  ],
-                                ),
-                                if (_showToSuggestions)
-                                  Container(
-                                    constraints: const BoxConstraints(
-                                      maxHeight: 200,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border(
-                                        top: BorderSide(
-                                          color: Colors.grey.shade300,
                                         ),
                                       ),
-                                    ),
-                                    child: ListView.builder(
-                                      shrinkWrap: true,
-                                      padding: EdgeInsets.zero,
-                                      itemCount: _toSuggestions.length,
-                                      itemBuilder: (context, index) {
-                                        final suggestion =
-                                            _toSuggestions[index];
-                                        return ListTile(
-                                          dense: true,
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        padding: EdgeInsets.zero,
+                                        itemCount: _fromSuggestions.length,
+                                        itemBuilder: (context, index) {
+                                          final suggestion =
+                                              _fromSuggestions[index];
+                                          return ListTile(
+                                            dense: true,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                            leading: const Icon(
+                                              Icons.location_on,
+                                              size: 20,
+                                              color: Color(0xFF1976D2),
+                                            ),
+                                            title: Text(
+                                              suggestion['main_text'],
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                          leading: const Icon(
-                                            Icons.location_on,
-                                            size: 20,
-                                            color: Colors.red,
-                                          ),
-                                          title: Text(
-                                            suggestion['main_text'],
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
                                             ),
-                                          ),
-                                          subtitle: Text(
-                                            suggestion['description'],
-                                            style: const TextStyle(
-                                              fontSize: 12,
+                                            subtitle: Text(
+                                              suggestion['description'],
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            onTap: () {
+                                              setState(() {
+                                                _fromController.text =
+                                                    suggestion['main_text'];
+                                                _fromLocation =
+                                                    suggestion['main_text']
+                                                        .toLowerCase();
+                                                _showFromSuggestions = false;
+                                              });
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            // Container(
+                            //   padding:
+                            //       const EdgeInsets.symmetric(horizontal: 12.0),
+                            //   decoration: BoxDecoration(
+                            //     border: Border.all(color: Colors.grey.shade300),
+                            //     borderRadius: BorderRadius.circular(12),
+                            //   ),
+                            //   child: Row(
+                            //     children: [
+                            //       const Icon(Icons.trip_origin,
+                            //           color: Color(0xFF1976D2), size: 20),
+                            //       const SizedBox(width: 12),
+                            //       Expanded(
+                            //         child: TextField(
+                            //           controller: _fromController,
+                            //           decoration: const InputDecoration(
+                            //             hintText: 'From',
+                            //             hintStyle: TextStyle(
+                            //                 color: Colors.grey, fontSize: 16),
+                            //             border: InputBorder.none,
+                            //           ),
+                            //           onChanged: (value) {
+                            //             setState(() {
+                            //               _fromLocation = value.toLowerCase();
+                            //             });
+                            //           },
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+                            const SizedBox(height: 12),
+        
+                            // Container(
+                            //   padding:
+                            //       const EdgeInsets.symmetric(horizontal: 12.0),
+                            //   decoration: BoxDecoration(
+                            //     border: Border.all(color: Colors.grey.shade300),
+                            //     borderRadius: BorderRadius.circular(12),
+                            //   ),
+                            //   child: Row(
+                            //     children: [
+                            //       const Icon(Icons.location_on,
+                            //           color: Colors.red, size: 20),
+                            //       const SizedBox(width: 12),
+                            //       Expanded(
+                            //         child: TextField(
+                            //           controller: _toController,
+                            //           decoration: const InputDecoration(
+                            //             hintText: 'To',
+                            //             hintStyle: TextStyle(
+                            //                 color: Colors.grey, fontSize: 16),
+                            //             border: InputBorder.none,
+                            //           ),
+                            //           onChanged: (value) {
+                            //             setState(() {
+                            //               _toLocation = value.toLowerCase();
+                            //             });
+                            //           },
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _toController,
+                                          decoration: const InputDecoration(
+                                            hintText: 'To',
+                                            hintStyle: TextStyle(
                                               color: Colors.grey,
+                                              fontSize: 16,
                                             ),
+                                            border: InputBorder.none,
                                           ),
-                                          onTap: () {
+                                          onChanged: (value) {
+                                            _updateToSuggestions(value);
+                                          },
+                                        ),
+                                      ),
+                                      if (_toController.text.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.clear, size: 18),
+                                          onPressed: () {
                                             setState(() {
-                                              _toController.text =
-                                                  suggestion['main_text'];
-                                              _toLocation =
-                                                  suggestion['main_text']
-                                                      .toLowerCase();
+                                              _toController.clear();
+                                              _toLocation = '';
                                               _showToSuggestions = false;
                                             });
                                           },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: _selectDate,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 14,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_today,
-                                          color: Color(0xFF1976D2),
-                                          size: 18,
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            _selectedDate != null
-                                                ? DateFormat(
-                                                    'dd MMM, yyyy',
-                                                  ).format(_selectedDate!)
-                                                : 'Date of Journey',
-                                            style: TextStyle(
-                                              color: _selectedDate != null
-                                                  ? Colors.black87
-                                                  : Colors.grey,
-                                              fontSize: 14,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
+                                    ],
+                                  ),
+                                  if (_showToSuggestions)
+                                    Container(
+                                      constraints: const BoxConstraints(
+                                        maxHeight: 200,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border(
+                                          top: BorderSide(
+                                            color: Colors.grey.shade300,
                                           ),
                                         ),
+                                      ),
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        padding: EdgeInsets.zero,
+                                        itemCount: _toSuggestions.length,
+                                        itemBuilder: (context, index) {
+                                          final suggestion =
+                                              _toSuggestions[index];
+                                          return ListTile(
+                                            dense: true,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                            leading: const Icon(
+                                              Icons.location_on,
+                                              size: 20,
+                                              color: Colors.red,
+                                            ),
+                                            title: Text(
+                                              suggestion['main_text'],
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              suggestion['description'],
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            onTap: () {
+                                              setState(() {
+                                                _toController.text =
+                                                    suggestion['main_text'];
+                                                _toLocation =
+                                                    suggestion['main_text']
+                                                        .toLowerCase();
+                                                _showToSuggestions = false;
+                                              });
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: _selectDate,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 14,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.calendar_today,
+                                            color: Color(0xFF1976D2),
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              _selectedDate != null
+                                                  ? DateFormat(
+                                                      'dd MMM, yyyy',
+                                                    ).format(_selectedDate!)
+                                                  : 'Date of Journey',
+                                              style: TextStyle(
+                                                color: _selectedDate != null
+                                                    ? Colors.black87
+                                                    : Colors.grey,
+                                                fontSize: 14,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF1976D2),
+                                        Color(0xFF0D47A1),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _loadTickets,
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 14,
+                                        ),
+                                        child: const Icon(
+                                          Icons.search,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(25),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 1,
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: const InputDecoration(
+                                    icon: Icon(
+                                      Icons.search,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
+                                    hintText: 'Search buses, routes...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                    ),
+                                    border: InputBorder.none,
+                                  ),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _searchQuery = value.toLowerCase();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1976D2),
+                                borderRadius: BorderRadius.circular(25),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _showFilterBottomSheet,
+                                  borderRadius: BorderRadius.circular(25),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(13),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.tune,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        if (_selectedBusTypes.isNotEmpty ||
+                                            _sortBy != 'none')
+                                          Container(
+                                            margin: const EdgeInsets.only(
+                                              left: 4,
+                                            ),
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 8,
+                                              minHeight: 8,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF1976D2),
-                                      Color(0xFF0D47A1),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _loadTickets,
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 14,
-                                      ),
-                                      child: const Icon(
-                                        Icons.search,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                              ),
-                              height: 50,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(25),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  icon: Icon(
-                                    Icons.search,
-                                    color: Colors.grey,
-                                    size: 20,
-                                  ),
-                                  hintText: 'Search buses, routes...',
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 16,
-                                  ),
-                                  border: InputBorder.none,
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _searchQuery = value.toLowerCase();
-                                  });
-                                },
-                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1976D2),
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 1,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: _showFilterBottomSheet,
-                                borderRadius: BorderRadius.circular(25),
-                                child: Container(
-                                  padding: const EdgeInsets.all(13),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.tune,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      if (_selectedBusTypes.isNotEmpty ||
-                                          _sortBy != 'none')
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            left: 4,
-                                          ),
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 8,
-                                            minHeight: 8,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_selectedDate != null ||
-                      _fromLocation.isNotEmpty ||
-                      _toLocation.isNotEmpty ||
-                      _selectedBusTypes.isNotEmpty ||
-                      _sortBy != 'none')
-                    SliverToBoxAdapter(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
+                          ],
                         ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              if (_fromLocation.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Chip(
-                                    label: Text(
-                                      'From: $_fromLocation',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    deleteIcon: const Icon(
-                                      Icons.close,
-                                      size: 18,
-                                    ),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _fromLocation = '';
-                                        _fromController.clear();
-                                      });
-                                    },
-                                    backgroundColor: const Color(0xFFE3F2FD),
-                                  ),
-                                ),
-                              if (_toLocation.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Chip(
-                                    label: Text(
-                                      'To: $_toLocation',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    deleteIcon: const Icon(
-                                      Icons.close,
-                                      size: 18,
-                                    ),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _toLocation = '';
-                                        _toController.clear();
-                                      });
-                                    },
-                                    backgroundColor: const Color(0xFFFFE0E0),
-                                  ),
-                                ),
-                              if (_selectedDate != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Chip(
-                                    label: Text(
-                                      DateFormat(
-                                        'MMM dd, yyyy',
-                                      ).format(_selectedDate!),
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    deleteIcon: const Icon(
-                                      Icons.close,
-                                      size: 18,
-                                    ),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _selectedDate = null;
-                                      });
-                                    },
-                                    backgroundColor: const Color(0xFFFFF3E0),
-                                  ),
-                                ),
-                              if (_sortBy != 'none')
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Chip(
-                                    label: Text(
-                                      'Sorted: ${_sortBy.replaceAll('_', ' ')}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    deleteIcon: const Icon(
-                                      Icons.close,
-                                      size: 18,
-                                    ),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _sortBy = 'none';
-                                      });
-                                    },
-                                    backgroundColor: const Color(0xFFE8F5E9),
-                                  ),
-                                ),
-                              if (_selectedBusTypes.isNotEmpty)
-                                ..._selectedBusTypes.map(
-                                  (type) => Padding(
+                      ),
+                    ),
+                    if (_selectedDate != null ||
+                        _fromLocation.isNotEmpty ||
+                        _toLocation.isNotEmpty ||
+                        _selectedBusTypes.isNotEmpty ||
+                        _sortBy != 'none')
+                      SliverToBoxAdapter(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                if (_fromLocation.isNotEmpty)
+                                  Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Chip(
                                       label: Text(
-                                        type,
+                                        'From: $_fromLocation',
                                         style: const TextStyle(fontSize: 12),
                                       ),
                                       deleteIcon: const Icon(
@@ -1632,131 +1558,217 @@ class _BusScreenState extends State<BusScreen> {
                                       ),
                                       onDeleted: () {
                                         setState(() {
-                                          _selectedBusTypes.remove(type);
+                                          _fromLocation = '';
+                                          _fromController.clear();
                                         });
                                       },
-                                      backgroundColor: const Color(0xFFFCE4EC),
+                                      backgroundColor: const Color(0xFFE3F2FD),
                                     ),
                                   ),
+                                if (_toLocation.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: Chip(
+                                      label: Text(
+                                        'To: $_toLocation',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      deleteIcon: const Icon(
+                                        Icons.close,
+                                        size: 18,
+                                      ),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _toLocation = '';
+                                          _toController.clear();
+                                        });
+                                      },
+                                      backgroundColor: const Color(0xFFFFE0E0),
+                                    ),
+                                  ),
+                                if (_selectedDate != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: Chip(
+                                      label: Text(
+                                        DateFormat(
+                                          'MMM dd, yyyy',
+                                        ).format(_selectedDate!),
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      deleteIcon: const Icon(
+                                        Icons.close,
+                                        size: 18,
+                                      ),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _selectedDate = null;
+                                        });
+                                      },
+                                      backgroundColor: const Color(0xFFFFF3E0),
+                                    ),
+                                  ),
+                                if (_sortBy != 'none')
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: Chip(
+                                      label: Text(
+                                        'Sorted: ${_sortBy.replaceAll('_', ' ')}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      deleteIcon: const Icon(
+                                        Icons.close,
+                                        size: 18,
+                                      ),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _sortBy = 'none';
+                                        });
+                                      },
+                                      backgroundColor: const Color(0xFFE8F5E9),
+                                    ),
+                                  ),
+                                if (_selectedBusTypes.isNotEmpty)
+                                  ..._selectedBusTypes.map(
+                                    (type) => Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: Chip(
+                                        label: Text(
+                                          type,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                        deleteIcon: const Icon(
+                                          Icons.close,
+                                          size: 18,
+                                        ),
+                                        onDeleted: () {
+                                          setState(() {
+                                            _selectedBusTypes.remove(type);
+                                          });
+                                        },
+                                        backgroundColor: const Color(0xFFFCE4EC),
+                                      ),
+                                    ),
+                                  ),
+                                TextButton.icon(
+                                  onPressed: _clearFilters,
+                                  icon: const Icon(Icons.clear_all, size: 18),
+                                  label: const Text('Clear All'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1976D2),
+                                  ),
                                 ),
-                              TextButton.icon(
-                                onPressed: _clearFilters,
-                                icon: const Icon(Icons.clear_all, size: 18),
-                                label: const Text('Clear All'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1976D2),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Available Nearby Bus Tickets',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.refresh,
-                              color: Color(0xFF1976D2),
-                            ),
-                            onPressed: _loadTickets,
-                            tooltip: 'Refresh',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Consumer<BusTicketProvider>(
-                    builder: (context, provider, child) {
-                      if (provider.isLoading) {
-                        return const SliverToBoxAdapter(
-                          child: Center(
-                            heightFactor: 4,
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF1976D2),
-                            ),
-                          ),
-                        );
-                      }
-
-                      List<BusTicket> filteredTickets = _applyFiltersAndSort(
-                        provider.tickets,
-                      );
-
-                      if (filteredTickets.isEmpty) {
-                        return SliverToBoxAdapter(
-                          child: Container(
-                            height: MediaQuery.of(context).size.height * 0.6,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.confirmation_number_outlined,
-                                    size: 80,
-                                    color: Colors.grey[300],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _searchQuery.isNotEmpty ||
-                                            _fromLocation.isNotEmpty ||
-                                            _toLocation.isNotEmpty ||
-                                            _selectedBusTypes.isNotEmpty
-                                        ? 'No tickets found matching your filters'
-                                        : _selectedDate != null
-                                        ? 'No tickets available for selected date'
-                                        : 'No tickets available',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextButton.icon(
-                                    onPressed: _clearFilters,
-                                    icon: const Icon(Icons.clear_all),
-                                    label: const Text('Clear Filters'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF1976D2),
-                                    ),
-                                  ),
-                                ],
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Available Nearby Bus Tickets',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
                             ),
-                          ),
-                        );
-                      }
-
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final ticket = filteredTickets[index];
-                          return GestureDetector(
-                            onTap: () {
-                              _showTicketSelectionPopup(ticket);
-                            },
-                            child: _buildBusTicketCard(ticket),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.refresh,
+                                color: Color(0xFF1976D2),
+                              ),
+                              onPressed: _loadTickets,
+                              tooltip: 'Refresh',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Consumer<BusTicketProvider>(
+                      builder: (context, provider, child) {
+                        if (provider.isLoading) {
+                          return const SliverToBoxAdapter(
+                            child: Center(
+                              heightFactor: 4,
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF1976D2),
+                              ),
+                            ),
                           );
-                        }, childCount: filteredTickets.length),
-                      );
-                    },
-                  ),
-                ],
+                        }
+        
+                        List<BusTicket> filteredTickets = _applyFiltersAndSort(
+                          provider.tickets,
+                        );
+        
+                        if (filteredTickets.isEmpty) {
+                          return SliverToBoxAdapter(
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.confirmation_number_outlined,
+                                      size: 80,
+                                      color: Colors.grey[300],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _searchQuery.isNotEmpty ||
+                                              _fromLocation.isNotEmpty ||
+                                              _toLocation.isNotEmpty ||
+                                              _selectedBusTypes.isNotEmpty
+                                          ? 'No tickets found matching your filters'
+                                          : _selectedDate != null
+                                          ? 'No tickets available for selected date'
+                                          : 'No tickets available',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextButton.icon(
+                                      onPressed: _clearFilters,
+                                      icon: const Icon(Icons.clear_all),
+                                      label: const Text('Clear Filters'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(0xFF1976D2),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+        
+                        return SliverList(
+                          delegate: SliverChildBuilderDelegate((context, index) {
+                            final ticket = filteredTickets[index];
+                            return GestureDetector(
+                              onTap: () {
+                                _showTicketSelectionPopup(ticket);
+                              },
+                              child: _buildBusTicketCard(ticket),
+                            );
+                          }, childCount: filteredTickets.length),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

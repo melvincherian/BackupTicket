@@ -955,6 +955,7 @@ import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
+import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -1212,186 +1213,197 @@ class _TrainScreenState extends State<TrainScreen>
           ),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue.shade50, Colors.white],
+      body: PopScope(
+                    canPop: false,
+           onPopInvoked: (didPop) async {
+        if (didPop) return;
+
+        final shouldExit = await showBackConfirmDialog(context);
+        if (shouldExit) {
+          Navigator.of(context).pop(); // exits app / screen
+        }
+      },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blue.shade50, Colors.white],
+            ),
           ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Modern Train Animation Container
-              Container(
-                height: 250,
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Background glow effect
-                    Positioned.fill(
-                      child: AnimatedBuilder(
-                        animation: _trainAnimation,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Modern Train Animation Container
+                Container(
+                  height: 250,
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Background glow effect
+                      Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: _trainAnimation,
+                          builder: (context, child) {
+                            return CustomPaint(
+                              painter: GlowPainter(
+                                position: _trainAnimation.value,
+                                color: const Color(0xFF1976D2).withOpacity(0.1),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+        
+                      // Modern tracks with perspective
+                      Positioned(
+                        bottom: 80,
+                        left: 0,
+                        right: 0,
+                        child: CustomPaint(
+                          size: Size(MediaQuery.of(context).size.width, 30),
+                          painter: ModernTrackPainter(),
+                        ),
+                      ),
+        
+                      // Speed particles/lines
+                      AnimatedBuilder(
+                        animation: _particleAnimation,
                         builder: (context, child) {
                           return CustomPaint(
-                            painter: GlowPainter(
-                              position: _trainAnimation.value,
-                              color: const Color(0xFF1976D2).withOpacity(0.1),
+                            size: Size(MediaQuery.of(context).size.width, 250),
+                            painter: SpeedLinesPainter(
+                              progress: _particleAnimation.value,
                             ),
                           );
                         },
                       ),
-                    ),
-
-                    // Modern tracks with perspective
-                    Positioned(
-                      bottom: 80,
-                      left: 0,
-                      right: 0,
-                      child: CustomPaint(
-                        size: Size(MediaQuery.of(context).size.width, 30),
-                        painter: ModernTrackPainter(),
+        
+                      // Smoke effect
+                      AnimatedBuilder(
+                        animation: _smokeAnimation,
+                        builder: (context, child) {
+                          return CustomPaint(
+                            size: Size(MediaQuery.of(context).size.width, 250),
+                            painter: SmokePainter(
+                              animationValue: _smokeAnimation.value,
+                            ),
+                          );
+                        },
                       ),
-                    ),
-
-                    // Speed particles/lines
-                    AnimatedBuilder(
-                      animation: _particleAnimation,
-                      builder: (context, child) {
-                        return CustomPaint(
-                          size: Size(MediaQuery.of(context).size.width, 250),
-                          painter: SpeedLinesPainter(
-                            progress: _particleAnimation.value,
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Smoke effect
-                    AnimatedBuilder(
-                      animation: _smokeAnimation,
-                      builder: (context, child) {
-                        return CustomPaint(
-                          size: Size(MediaQuery.of(context).size.width, 250),
-                          painter: SmokePainter(
-                            animationValue: _smokeAnimation.value,
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Animated full train
-                    AnimatedBuilder(
-                      animation: _trainAnimation,
-                      builder: (context, child) {
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final position = screenWidth * _trainAnimation.value;
-
-                        return Positioned(
-                          left: position - 120, // Adjusted for full train width
-                          bottom: 60,
-                          child: Transform.scale(
-                            scale:
-                                1.0 +
-                                (0.05 *
-                                    math.sin(_trainAnimation.value * math.pi)),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF1976D2,
-                                    ).withOpacity(0.3),
-                                    blurRadius: 20,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: CustomPaint(
-                                size: const Size(
-                                  240,
-                                  100,
-                                ), // Larger size for full train
-                                painter: FullTrainPainter(),
+        
+                      // Animated full train
+                      AnimatedBuilder(
+                        animation: _trainAnimation,
+                        builder: (context, child) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final position = screenWidth * _trainAnimation.value;
+        
+                          return Positioned(
+                            left: position - 120, // Adjusted for full train width
+                            bottom: 60,
+                            child: Transform.scale(
+                              scale:
+                                  1.0 +
+                                  (0.05 *
+                                      math.sin(_trainAnimation.value * math.pi)),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF1976D2,
+                                      ).withOpacity(0.3),
+                                      blurRadius: 20,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: CustomPaint(
+                                  size: const Size(
+                                    240,
+                                    100,
+                                  ), // Larger size for full train
+                                  painter: FullTrainPainter(),
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Pulsing "Coming Soon" Badge
-              ScaleTransition(
-                scale: _pulseAnimation,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1976D2), Color(0xFF0D47A1)],
-                    ),
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1976D2).withOpacity(0.4),
-                        blurRadius: 15,
-                        spreadRadius: 2,
+                          );
+                        },
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        color: Colors.white,
-                        size: 18,
+                ),
+        
+                const SizedBox(height: 40),
+        
+                // Pulsing "Coming Soon" Badge
+                ScaleTransition(
+                  scale: _pulseAnimation,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1976D2), Color(0xFF0D47A1)],
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'COMING SOON',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1976D2).withOpacity(0.4),
+                          blurRadius: 15,
+                          spreadRadius: 2,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'COMING SOON',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Subtitle text
-              Text(
-                'Train Booking Feature',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+        
+                const SizedBox(height: 24),
+        
+                // Subtitle text
+                Text(
+                  'Train Booking Feature',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                'We\'re working on something amazing!',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-              ),
-            ],
+        
+                const SizedBox(height: 8),
+        
+                Text(
+                  'We\'re working on something amazing!',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                ),
+              ],
+            ),
           ),
         ),
       ),

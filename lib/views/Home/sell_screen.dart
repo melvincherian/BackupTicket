@@ -4,8 +4,10 @@ import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
 import 'package:backup_ticket/views/Home/train_screen.dart';
 import 'package:backup_ticket/views/Sell/sell_bus_ticket.dart';
 import 'package:backup_ticket/views/Sell/sell_movie_ticket.dart';
+import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class SellScreen extends StatefulWidget {
@@ -228,51 +230,61 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 235, 236, 244),
-              Color.fromARGB(255, 224, 225, 244),
-              Color.fromARGB(255, 224, 225, 244),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom AppBar
-              // _buildAppBar(context),
+      body: PopScope(
+                    canPop: false,
+           onPopInvoked: (didPop) async {
+        if (didPop) return;
 
-              // Main Content
-              Expanded(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(30),
-                          topRight: Radius.circular(30),
+        final shouldExit = await showBackConfirmDialog(context);
+        if (shouldExit) {
+SystemNavigator.pop();        }
+      },
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(255, 235, 236, 244),
+                Color.fromARGB(255, 224, 225, 244),
+                Color.fromARGB(255, 224, 225, 244),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                // _buildAppBar(context),
+        
+                // Main Content
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF5F7FA),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30),
+                            topRight: Radius.circular(30),
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 32),
-                          _buildHeader(),
-                          const SizedBox(height: 24),
-                          Expanded(child: _buildTicketCards()),
-                        ],
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 32),
+                            _buildHeader(),
+                            const SizedBox(height: 24),
+                            Expanded(child: _buildTicketCards()),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -393,49 +405,49 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
             );
           },
         ),
-        const SizedBox(height: 20),
-        _AnimatedTicketCard(
-          delay: 150,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0277BD), Color(0xFF01579B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          icon: Icons.directions_bus,
-          title: 'Bus Tickets',
-          subtitle: 'Sell your bus travel tickets',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SellBusTicket()),
-            );
-          },
-        ),
+        // const SizedBox(height: 20),
+        // _AnimatedTicketCard(
+        //   delay: 150,
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFF0277BD), Color(0xFF01579B)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   icon: Icons.directions_bus,
+        //   title: 'Bus Tickets',
+        //   subtitle: 'Sell your bus travel tickets',
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => SellBusTicket()),
+        //     );
+        //   },
+        // ),
 
-        SizedBox(height: 20),
-        _AnimatedTicketCard(
-          delay: 200, // Slightly more delay to animate after bus card
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF43A047),
-              Color(0xFF2E7D32),
-            ], // Greenish gradient for train
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          icon: Icons.train, // Train icon
-          title: 'Train Tickets',
-          subtitle: 'Sell your train travel tickets',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TrainScreen(),
-              ), // Create this screen
-            );
-          },
-        ),
-        const SizedBox(height: 20),
+        // SizedBox(height: 20),
+        // _AnimatedTicketCard(
+        //   delay: 200, // Slightly more delay to animate after bus card
+        //   gradient: const LinearGradient(
+        //     colors: [
+        //       Color(0xFF43A047),
+        //       Color(0xFF2E7D32),
+        //     ], // Greenish gradient for train
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   icon: Icons.train, // Train icon
+        //   title: 'Train Tickets',
+        //   subtitle: 'Sell your train travel tickets',
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => TrainScreen(),
+        //       ), // Create this screen
+        //     );
+        //   },
+        // ),
+        // const SizedBox(height: 20),
         // _buildInfoCard(),
       ],
     );

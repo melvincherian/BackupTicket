@@ -1,14 +1,16 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
+// class BottomNavbarProvider extends ChangeNotifier {
+//   int _currentIndex = 0;
 
-class BottomNavbarProvider extends ChangeNotifier{
+//   int get currentIndex => _currentIndex;
 
-int _currentIndex=0;
+//   void setIndex(int index) {
+//     _currentIndex = index;
+//     notifyListeners();
+//   }
 
-int get currentIndex=>_currentIndex;
-
-void setIndex(int index){
-  _currentIndex=index;
-  notifyListeners();
-}
-
-}
+//   /// NEW: set initial index (used once)
+//   void setInitialIndex(int index) {
+//     _currentIndex = index;
+//   }
+// }

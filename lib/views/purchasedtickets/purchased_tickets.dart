@@ -1,1078 +1,49 @@
 // import 'dart:io';
-// import 'dart:typed_data';
-// import 'dart:ui' as ui;
+// import 'package:backup_ticket/provider/purchaseticket/purchase_ticket_provider.dart';
+// import 'package:backup_ticket/services/purchase_ticket_service.dart';
 // import 'package:flutter/material.dart';
-// import 'package:flutter/rendering.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:backup_ticket/helper/auth_helper.dart';
 // import 'package:gal/gal.dart';
 // import 'package:path_provider/path_provider.dart';
 // import 'package:http/http.dart' as http;
+// import 'package:provider/provider.dart';
 
-// class PurchasedTickets extends StatelessWidget {
+// import 'package:intl/intl.dart';
+
+// class PurchasedTickets extends StatefulWidget {
 //   const PurchasedTickets({super.key});
 
 //   @override
-//   Widget build(BuildContext context) {
-//     return DefaultTabController(
-//       length: 2,
-//       child: Scaffold(
-//         backgroundColor: Colors.grey[50],
-//         appBar: AppBar(
-//           backgroundColor: Colors.white,
-//           elevation: 0,
-//           title: const Text(
-//             'My Purchased Tickets',
-//             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-//           ),
-//           leading: IconButton(
-//             onPressed: () {
-//               Navigator.of(context).pop();
-//             },
-//             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-//           ),
-//           bottom: const TabBar(
-//             labelColor: Color(0xFF1976D2),
-//             unselectedLabelColor: Colors.grey,
-//             indicatorColor: Color(0xFF1976D2),
-//             indicatorWeight: 3,
-//             tabs: [
-//               Tab(icon: Icon(Icons.movie), text: 'Movie Tickets'),
-//               Tab(icon: Icon(Icons.directions_bus), text: 'Bus Tickets'),
-//             ],
-//           ),
-//         ),
-//         body: TabBarView(
-//           children: [_buildMovieTicketsTab(), _buildBusTicketsTab()],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // Movie Tickets Tab
-//   Widget _buildMovieTicketsTab() {
-//     return FutureBuilder<String?>(
-//       future: UserPreferences.getUserId(),
-//       builder: (context, userSnapshot) {
-//         if (userSnapshot.connectionState == ConnectionState.waiting) {
-//           return const Center(child: CircularProgressIndicator());
-//         }
-
-//         final userId = userSnapshot.data;
-//         if (userId == null) {
-//           return const Center(child: Text('User not logged in'));
-//         }
-
-//         return StreamBuilder<QuerySnapshot>(
-//           stream: FirebaseFirestore.instance
-//               .collection('orders')
-//               .where('userId', isEqualTo: userId)
-//               .snapshots(),
-//           builder: (context, snapshot) {
-//             if (snapshot.connectionState == ConnectionState.waiting) {
-//               return const Center(child: CircularProgressIndicator());
-//             }
-
-//             if (snapshot.hasError) {
-//               return _buildErrorState('Error loading movie tickets');
-//             }
-
-//             final allTickets = snapshot.data?.docs ?? [];
-
-//             // Filter movie tickets (those with movieName field)
-//             final tickets = allTickets.where((doc) {
-//               final data = doc.data() as Map<String, dynamic>;
-//               return data.containsKey('movieName');
-//             }).toList();
-
-//             if (tickets.isEmpty) {
-//               return _buildEmptyState(
-//                 icon: Icons.movie_outlined,
-//                 message: 'No movie tickets purchased yet',
-//                 subtitle: 'Your purchased movie tickets will appear here',
-//               );
-//             }
-
-//             return ListView.builder(
-//               padding: const EdgeInsets.all(16),
-//               itemCount: tickets.length,
-//               itemBuilder: (context, index) {
-//                 final ticketData =
-//                     tickets[index].data() as Map<String, dynamic>;
-//                 return _buildMovieTicketCard(context, ticketData);
-//               },
-//             );
-//           },
-//         );
-//       },
-//     );
-//   }
-
-//   // Bus Tickets Tab
-//   Widget _buildBusTicketsTab() {
-//     return FutureBuilder<String?>(
-//       future: UserPreferences.getUserId(),
-//       builder: (context, userSnapshot) {
-//         if (userSnapshot.connectionState == ConnectionState.waiting) {
-//           return const Center(child: CircularProgressIndicator());
-//         }
-
-//         final userId = userSnapshot.data;
-//         if (userId == null) {
-//           return const Center(child: Text('User not logged in'));
-//         }
-
-//         return StreamBuilder<QuerySnapshot>(
-//           stream: FirebaseFirestore.instance
-//               .collection('orders')
-//               .where('buyerId', isEqualTo: userId)
-//               .snapshots(),
-//           builder: (context, snapshot) {
-//             if (snapshot.connectionState == ConnectionState.waiting) {
-//               return const Center(child: CircularProgressIndicator());
-//             }
-
-//             if (snapshot.hasError) {
-//               return _buildErrorState('Error loading bus tickets');
-//             }
-
-//             final allTickets = snapshot.data?.docs ?? [];
-
-//             // Filter bus tickets (those with busName field)
-//             final tickets = allTickets.where((doc) {
-//               final data = doc.data() as Map<String, dynamic>;
-//               return data.containsKey('busName');
-//             }).toList();
-
-//             if (tickets.isEmpty) {
-//               return _buildEmptyState(
-//                 icon: Icons.directions_bus_outlined,
-//                 message: 'No bus tickets purchased yet',
-//                 subtitle: 'Your purchased bus tickets will appear here',
-//               );
-//             }
-
-//             return ListView.builder(
-//               padding: const EdgeInsets.all(16),
-//               itemCount: tickets.length,
-//               itemBuilder: (context, index) {
-//                 final ticketData =
-//                     tickets[index].data() as Map<String, dynamic>;
-//                 return _buildBusTicketCard(context, ticketData);
-//               },
-//             );
-//           },
-//         );
-//       },
-//     );
-//   }
-
-//   // Movie Ticket Card
-//   Widget _buildMovieTicketCard(
-//     BuildContext context,
-//     Map<String, dynamic> ticketData,
-//   ) {
-//     final movieName = ticketData['movieName'] ?? 'Unknown Movie';
-//     final theatrePlace = ticketData['theatrePlace'] ?? 'Unknown Theatre';
-//     final showTime = ticketData['showTime'] ?? '';
-//     final totalPrice = ticketData['totalPrice'] ?? 0;
-
-//     String showDate = _formatDate(ticketData['showDate']);
-
-//     String formattedDateTime = '';
-//     if (showDate.isNotEmpty && showTime.isNotEmpty) {
-//       formattedDateTime = '$showDate, $showTime';
-//     }
-
-//     final qrCodeUrl = ticketData['qrCodeImageUrl'];
-//     final ticketImageUrl = ticketData['ticketImageUrl'];
-
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(0.1),
-//             spreadRadius: 1,
-//             blurRadius: 8,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.all(12),
-//             child: Row(
-//               children: [
-//                 // Poster
-//                 Container(
-//                   width: 60,
-//                   height: 80,
-//                   decoration: BoxDecoration(
-//                     color: Colors.grey[300],
-//                     borderRadius: BorderRadius.circular(6),
-//                   ),
-//                   child: ClipRRect(
-//                     borderRadius: BorderRadius.circular(6),
-//                     child: ticketImageUrl != null && ticketImageUrl.isNotEmpty
-//                         ? Image.network(ticketImageUrl, fit: BoxFit.cover)
-//                         : const Icon(Icons.movie, color: Colors.grey),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 12),
-
-//                 // Details
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         movieName,
-//                         style: const TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.w600,
-//                         ),
-//                         maxLines: 2,
-//                         overflow: TextOverflow.ellipsis,
-//                       ),
-//                       if (formattedDateTime.isNotEmpty)
-//                         Text(
-//                           formattedDateTime,
-//                           style: const TextStyle(
-//                             fontSize: 14,
-//                             color: Colors.black,
-//                           ),
-//                         ),
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         theatrePlace,
-//                         style: const TextStyle(
-//                           fontSize: 12,
-//                           color: Colors.grey,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         '₹$totalPrice',
-//                         style: const TextStyle(
-//                           fontSize: 14,
-//                           fontWeight: FontWeight.bold,
-//                           color: Color(0xFF1976D2),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-
-//                 PopupMenuButton<String>(
-//                   icon: const Icon(Icons.more_vert, color: Colors.grey),
-//                   onSelected: (value) {
-//                     if (value == 'view_qr' && qrCodeUrl != null) {
-//                       _showQRCodeFullScreen(context, qrCodeUrl);
-//                     } else if (value == 'view_details') {
-//                       _showMovieTicketDetails(context, ticketData);
-//                     }
-//                   },
-//                   itemBuilder: (context) => [
-//                     if (qrCodeUrl != null && qrCodeUrl.isNotEmpty)
-//                       const PopupMenuItem(
-//                         value: 'view_qr',
-//                         child: Row(
-//                           children: [
-//                             Icon(Icons.qr_code),
-//                             SizedBox(width: 8),
-//                             Text('View QR Code'),
-//                           ],
-//                         ),
-//                       ),
-//                     const PopupMenuItem(
-//                       value: 'view_details',
-//                       child: Row(
-//                         children: [
-//                           Icon(Icons.info_outline),
-//                           SizedBox(width: 8),
-//                           Text('View Details'),
-//                         ],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-
-//           // Download Button
-//           Container(
-//             width: double.infinity,
-//             margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-//             decoration: BoxDecoration(
-//               gradient: const LinearGradient(
-//                 colors: [Color(0xFF214194), Color(0xFF3F7EF3)],
-//               ),
-//               borderRadius: BorderRadius.circular(8),
-//             ),
-//             child: ElevatedButton.icon(
-//               onPressed: () {
-//                 _downloadTicket(context, ticketData, 'movie');
-//               },
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.transparent,
-//                 shadowColor: Colors.transparent,
-//               ),
-//               icon: const Icon(Icons.save_alt, color: Colors.white),
-//               label: const Text(
-//                 'Download Ticket',
-//                 style: TextStyle(
-//                   color: Colors.white,
-//                   fontWeight: FontWeight.w600,
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Bus Ticket Card
-//   Widget _buildBusTicketCard(
-//     BuildContext context,
-//     Map<String, dynamic> ticketData,
-//   ) {
-//     final busName = ticketData['busName'] ?? 'Unknown Bus';
-//     final pickupPoint = ticketData['pickupPoint'] ?? 'Unknown';
-//     final dropPoint = ticketData['dropPoint'] ?? 'Unknown';
-//     final totalPrice = ticketData['amount'] ?? 0;
-//     final ticketType = ticketData['ticketType'] ?? '';
-//     final dateOfJourney = _formatDate(ticketData['dateOfJourney']);
-//     final ticketImageUrl = ticketData['ticketImageUrl'];
-//     final paymentStatus = ticketData['paymentStatus'] ?? 'pending';
-
-//     // Determine badge
-//     final isAC =
-//         ticketType.toLowerCase().contains('ac') &&
-//         !ticketType.toLowerCase().contains('non');
-//     final badgeText = isAC ? 'AC' : 'NON-AC';
-//     final badgeColor = isAC ? const Color(0xFFE3F2FD) : const Color(0xFFFFF3E0);
-//     final badgeTextColor = isAC
-//         ? const Color(0xFF1976D2)
-//         : const Color(0xFFFF9800);
-
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(0.1),
-//             spreadRadius: 1,
-//             blurRadius: 8,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.all(12),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 // Header Row
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     Row(
-//                       children: [
-//                         const Icon(
-//                           Icons.directions_bus,
-//                           size: 20,
-//                           color: Color(0xFF1976D2),
-//                         ),
-//                         const SizedBox(width: 8),
-//                         Text(
-//                           busName,
-//                           style: const TextStyle(
-//                             fontSize: 16,
-//                             fontWeight: FontWeight.w600,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                     Container(
-//                       padding: const EdgeInsets.symmetric(
-//                         horizontal: 8,
-//                         vertical: 4,
-//                       ),
-//                       decoration: BoxDecoration(
-//                         color: badgeColor,
-//                         borderRadius: BorderRadius.circular(12),
-//                       ),
-//                       child: Text(
-//                         '${ticketData['ticketType']}',
-//                         style: TextStyle(
-//                           color: badgeTextColor,
-//                           fontSize: 12,
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-
-//                 const SizedBox(height: 12),
-
-//                 // Route Information
-//                 Row(
-//                   children: [
-//                     // Pickup
-//                     Expanded(
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           Text(
-//                             'From',
-//                             style: TextStyle(
-//                               color: Colors.grey[600],
-//                               fontSize: 11,
-//                             ),
-//                           ),
-//                           Text(
-//                             pickupPoint,
-//                             style: const TextStyle(
-//                               fontSize: 14,
-//                               fontWeight: FontWeight.w600,
-//                               color: Colors.black87,
-//                             ),
-//                             maxLines: 1,
-//                             overflow: TextOverflow.ellipsis,
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-
-//                     // Arrow
-//                     Container(
-//                       padding: const EdgeInsets.symmetric(horizontal: 8),
-//                       child: const Icon(
-//                         Icons.arrow_forward,
-//                         color: Color(0xFF1976D2),
-//                         size: 20,
-//                       ),
-//                     ),
-
-//                     // Drop
-//                     Expanded(
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.end,
-//                         children: [
-//                           Text(
-//                             'To',
-//                             style: TextStyle(
-//                               color: Colors.grey[600],
-//                               fontSize: 11,
-//                             ),
-//                           ),
-//                           Text(
-//                             dropPoint,
-//                             style: const TextStyle(
-//                               fontSize: 14,
-//                               fontWeight: FontWeight.w600,
-//                               color: Colors.black87,
-//                             ),
-//                             maxLines: 1,
-//                             overflow: TextOverflow.ellipsis,
-//                             textAlign: TextAlign.right,
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-
-//                 const SizedBox(height: 12),
-
-//                 // Date and Price Row
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     Row(
-//                       children: [
-//                         Icon(
-//                           Icons.calendar_today,
-//                           size: 14,
-//                           color: Colors.grey[600],
-//                         ),
-//                         const SizedBox(width: 4),
-//                         Text(
-//                           dateOfJourney,
-//                           style: const TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                     Text(
-//                       '₹$totalPrice',
-//                       style: const TextStyle(
-//                         fontSize: 18,
-//                         fontWeight: FontWeight.bold,
-//                         color: Color(0xFF1976D2),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-
-//                 const SizedBox(height: 8),
-
-//                 // Status Badge
-//                 Container(
-//                   padding: const EdgeInsets.symmetric(
-//                     horizontal: 8,
-//                     vertical: 4,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: paymentStatus == 'completed'
-//                         ? Colors.green[50]
-//                         : Colors.orange[50],
-//                     borderRadius: BorderRadius.circular(6),
-//                   ),
-//                   child: Row(
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: [
-//                       Icon(
-//                         paymentStatus == 'completed'
-//                             ? Icons.check_circle
-//                             : Icons.pending,
-//                         size: 14,
-//                         color: paymentStatus == 'completed'
-//                             ? Colors.green
-//                             : Colors.orange,
-//                       ),
-//                       const SizedBox(width: 4),
-//                       Text(
-//                         paymentStatus == 'completed' ? 'Confirmed' : 'Pending',
-//                         style: TextStyle(
-//                           fontSize: 12,
-//                           fontWeight: FontWeight.w500,
-//                           color: paymentStatus == 'completed'
-//                               ? Colors.green
-//                               : Colors.orange,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-
-//           // Download and View Details Buttons
-//           Padding(
-//             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-//             child: Row(
-//               children: [
-//                 Expanded(
-//                   child: OutlinedButton.icon(
-//                     onPressed: () {
-//                       _showBusTicketDetails(context, ticketData);
-//                     },
-//                     style: OutlinedButton.styleFrom(
-//                       side: const BorderSide(color: Color(0xFF1976D2)),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(8),
-//                       ),
-//                     ),
-//                     icon: const Icon(
-//                       Icons.info_outline,
-//                       color: Color(0xFF1976D2),
-//                     ),
-//                     label: const Text(
-//                       'View Details',
-//                       style: TextStyle(
-//                         color: Color(0xFF1976D2),
-//                         fontWeight: FontWeight.w600,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 8),
-//                 Expanded(
-//                   child: Container(
-//                     decoration: BoxDecoration(
-//                       gradient: const LinearGradient(
-//                         colors: [Color(0xFF214194), Color(0xFF3F7EF3)],
-//                       ),
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                     child: ElevatedButton.icon(
-//                       onPressed: () {
-//                         _downloadTicket(context, ticketData, 'bus');
-//                       },
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: Colors.transparent,
-//                         shadowColor: Colors.transparent,
-//                       ),
-//                       icon: const Icon(
-//                         Icons.save_alt,
-//                         color: Colors.white,
-//                         size: 18,
-//                       ),
-//                       label: const Text(
-//                         'Download',
-//                         style: TextStyle(
-//                           color: Colors.white,
-//                           fontWeight: FontWeight.w600,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Empty State Widget
-//   Widget _buildEmptyState({
-//     required IconData icon,
-//     required String message,
-//     required String subtitle,
-//   }) {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(icon, size: 80, color: Colors.grey[400]),
-//           const SizedBox(height: 16),
-//           Text(
-//             message,
-//             style: TextStyle(
-//               fontSize: 18,
-//               fontWeight: FontWeight.w500,
-//               color: Colors.grey[600],
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Text(
-//             subtitle,
-//             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Error State Widget
-//   Widget _buildErrorState(String message) {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-//           const SizedBox(height: 16),
-//           Text(
-//             message,
-//             style: TextStyle(
-//               fontSize: 18,
-//               fontWeight: FontWeight.w500,
-//               color: Colors.grey[600],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Date Formatter
-//   String _formatDate(dynamic rawDate) {
-//     if (rawDate == null) return '';
-
-//     try {
-//       if (rawDate is Timestamp) {
-//         DateTime date = rawDate.toDate();
-//         return '${date.day} ${_getMonthName(date.month)} ${date.year}';
-//       }
-
-//       if (rawDate is String) {
-//         if (rawDate.contains(" ")) {
-//           rawDate = rawDate.split(" ").first;
-//         }
-//         DateTime date = DateTime.parse(rawDate);
-//         return '${date.day} ${_getMonthName(date.month)} ${date.year}';
-//       }
-//     } catch (e) {
-//       return rawDate.toString();
-//     }
-
-//     return '';
-//   }
-
-//   String _getMonthName(int month) {
-//     const months = [
-//       '',
-//       'Jan',
-//       'Feb',
-//       'Mar',
-//       'Apr',
-//       'May',
-//       'Jun',
-//       'Jul',
-//       'Aug',
-//       'Sep',
-//       'Oct',
-//       'Nov',
-//       'Dec',
-//     ];
-//     return months[month];
-//   }
-
-//   // Download Ticket Function with Gal package
-//   Future<void> _downloadTicket(
-//     BuildContext context,
-//     Map<String, dynamic> ticketData,
-//     String type,
-//   ) async {
-//     try {
-//       // Show loading indicator
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(
-//           content: Row(
-//             children: [
-//               SizedBox(
-//                 width: 20,
-//                 height: 20,
-//                 child: CircularProgressIndicator(
-//                   strokeWidth: 2,
-//                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-//                 ),
-//               ),
-//               SizedBox(width: 16),
-//               Text('Downloading ticket...'),
-//             ],
-//           ),
-//           duration: Duration(seconds: 2),
-//         ),
-//       );
-
-//       String? imageUrl;
-//       String fileName;
-
-//       if (type == 'movie') {
-//         // For movie tickets, use QR code or ticket image
-//         imageUrl = ticketData['qrCodeImageUrl'] ?? ticketData['ticketImageUrl'];
-//         final movieName = ticketData['movieName'] ?? 'Movie';
-//         fileName =
-//             'Ticket_${movieName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-//       } else {
-//         // For bus tickets, use ticket image
-//         imageUrl = ticketData['ticketImageUrl'];
-//         final busName = ticketData['busName'] ?? 'Bus';
-//         fileName =
-//             'Ticket_${busName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-//       }
-
-//       if (imageUrl == null || imageUrl.isEmpty) {
-//         if (context.mounted) {
-//           ScaffoldMessenger.of(context).showSnackBar(
-//             const SnackBar(
-//               content: Text('No ticket image available to download'),
-//               backgroundColor: Colors.orange,
-//             ),
-//           );
-//         }
-//         return;
-//       }
-
-//       // Download the image from URL
-//       final response = await http.get(Uri.parse(imageUrl));
-
-//       if (response.statusCode == 200) {
-//         // Get temporary directory
-//         final tempDir = await getTemporaryDirectory();
-//         final filePath = '${tempDir.path}/$fileName';
-
-//         // Save the file temporarily
-//         final file = File(filePath);
-//         await file.writeAsBytes(response.bodyBytes);
-
-//         // Check if Gal.hasAccess is available, if not request permission
-//         bool hasAccess = true;
-//         try {
-//           hasAccess = await Gal.hasAccess();
-//           if (!hasAccess) {
-//             hasAccess = await Gal.requestAccess();
-//           }
-//         } catch (e) {
-//           // If hasAccess method doesn't exist, try to save directly
-//           print('Gal.hasAccess not available: $e');
-//         }
-
-//         if (hasAccess) {
-//           // Save to gallery using Gal - try different methods
-//           try {
-//             await Gal.putImage(filePath);
-//           } catch (e) {
-//             // If putImage with album fails, try without album parameter
-//             print('Error with putImage: $e');
-//             await Gal.putImage(filePath);
-//           }
-
-//           // Delete temporary file
-//           try {
-//             await file.delete();
-//           } catch (e) {
-//             print('Error deleting temp file: $e');
-//           }
-
-//           // Show success message
-//           if (context.mounted) {
-//             ScaffoldMessenger.of(context).showSnackBar(
-//               SnackBar(
-//                 content: Row(
-//                   children: [
-//                     const Icon(Icons.check_circle, color: Colors.white),
-//                     const SizedBox(width: 16),
-//                     Expanded(
-//                       child: Text(
-//                         'Ticket downloaded successfully!',
-//                         style: const TextStyle(color: Colors.white),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 backgroundColor: Colors.green,
-//                 behavior: SnackBarBehavior.floating,
-//                 duration: Duration(seconds: 3),
-//               ),
-//             );
-//           }
-//         } else {
-//           // Permission denied
-//           if (context.mounted) {
-//             ScaffoldMessenger.of(context).showSnackBar(
-//               const SnackBar(
-//                 content: Text('Gallery access permission denied'),
-//                 backgroundColor: Colors.red,
-//               ),
-//             );
-//           }
-//         }
-//       } else {
-//         throw Exception(
-//           'Failed to download image. Status: ${response.statusCode}',
-//         );
-//       }
-//     } catch (e) {
-//       print('Download error: $e');
-//       // Show error message
-//       if (context.mounted) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text('Error: ${e.toString()}'),
-//             backgroundColor: Colors.red,
-//             duration: Duration(seconds: 4),
-//             action: SnackBarAction(
-//               label: 'OK',
-//               textColor: Colors.white,
-//               onPressed: () {},
-//             ),
-//           ),
-//         );
-//       }
-//     }
-//   }
-
-//   // Show QR Code
-//   void _showQRCodeFullScreen(BuildContext context, String qrCodeUrl) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => Dialog(
-//         backgroundColor: Colors.transparent,
-//         child: Stack(
-//           children: [
-//             Container(
-//               padding: const EdgeInsets.all(20),
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(15),
-//               ),
-//               child: Image.network(qrCodeUrl, width: 250, height: 250),
-//             ),
-//             Positioned(
-//               right: 10,
-//               top: 10,
-//               child: IconButton(
-//                 icon: const Icon(Icons.close, color: Colors.white, size: 30),
-//                 onPressed: () => Navigator.pop(context),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // Show Movie Ticket Details
-//   void _showMovieTicketDetails(
-//     BuildContext context,
-//     Map<String, dynamic> ticketData,
-//   ) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: Text(ticketData['movieName'] ?? 'Ticket Details'),
-//         content: SingleChildScrollView(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               _buildDetailRow('Movie', ticketData['movieName'] ?? 'N/A'),
-//               _buildDetailRow('Theatre', ticketData['theatrePlace'] ?? 'N/A'),
-//               _buildDetailRow('Date', _formatDate(ticketData['showDate'])),
-//               _buildDetailRow('Time', ticketData['showTime'] ?? 'N/A'),
-//               _buildDetailRow(
-//                 'Tickets',
-//                 '${ticketData['numberOfTickets'] ?? 0}',
-//               ),
-//               _buildDetailRow(
-//                 'Total Price',
-//                 '₹${ticketData['totalPrice'] ?? 0}',
-//               ),
-//               _buildDetailRow(
-//                 'Payment Method',
-//                 ticketData['paymentMethod'] ?? 'N/A',
-//               ),
-//             ],
-//           ),
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: const Text('Close'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Show Bus Ticket Details
-//   void _showBusTicketDetails(
-//     BuildContext context,
-//     Map<String, dynamic> ticketData,
-//   ) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: Text(ticketData['busName'] ?? 'Bus Ticket Details'),
-//         content: SingleChildScrollView(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               _buildDetailRow('Bus Name', ticketData['busName'] ?? 'N/A'),
-//               _buildDetailRow('Type', ticketData['ticketType'] ?? 'N/A'),
-//               _buildDetailRow('From', ticketData['pickupPoint'] ?? 'N/A'),
-//               _buildDetailRow('To', ticketData['dropPoint'] ?? 'N/A'),
-//               _buildDetailRow(
-//                 'Journey Date',
-//                 _formatDate(ticketData['dateOfJourney']),
-//               ),
-//               _buildDetailRow('Amount', '₹${ticketData['amount'] ?? 0}'),
-//               _buildDetailRow('Payment ID', ticketData['paymentId'] ?? 'N/A'),
-//               _buildDetailRow('Status', ticketData['paymentStatus'] ?? 'N/A'),
-//               _buildDetailRow(
-//                 'Purchased At',
-//                 _formatDate(ticketData['purchasedAt']),
-//               ),
-//             ],
-//           ),
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: const Text('Close'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildDetailRow(String label, String value) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 4),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           SizedBox(
-//             width: 120,
-//             child: Text(
-//               '$label:',
-//               style: const TextStyle(
-//                 fontWeight: FontWeight.w500,
-//                 color: Colors.grey,
-//               ),
-//             ),
-//           ),
-//           Expanded(
-//             child: Text(
-//               value,
-//               style: const TextStyle(fontWeight: FontWeight.w500),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+//   State<PurchasedTickets> createState() => _PurchasedTicketsState();
 // }
 
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:gal/gal.dart';
-// import 'package:path_provider/path_provider.dart';
-// import 'package:http/http.dart' as http;
+// class _PurchasedTicketsState extends State<PurchasedTickets> {
+//   @override
+//   void initState() {
+//     super.initState();
+//     // Fetch tickets when screen loads
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       Provider.of<TicketProvider>(
+//         context,
+//         listen: false,
+//       ).fetchPurchasedTickets();
+//     });
+//   }
 
-// class PurchasedTickets extends StatelessWidget {
-//   const PurchasedTickets({super.key});
-
-//   /// ================= DUMMY DATA =================
-//   List<Map<String, dynamic>> get _movieTickets => [
-//         {
-//           'movieName': 'Leo',
-//           'theatrePlace': 'PVR Lulu Mall',
-//           'showTime': '7:30 PM',
-//           'showDate': DateTime.now().add(const Duration(days: 1)),
-//           'totalPrice': 450,
-//           'numberOfTickets': 2,
-//           'ticketImageUrl':
-//               'https://via.placeholder.com/150',
-//           'qrCodeImageUrl':
-//               'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=LeoTicket',
-//           'paymentMethod': 'UPI',
-//         },
-//       ];
-
+//   /// ================= DUMMY DATA FOR BUS TICKETS =================
 //   List<Map<String, dynamic>> get _busTickets => [
-//         {
-//           'busName': 'KSRTC Swift',
-//           'pickupPoint': 'Calicut',
-//           'dropPoint': 'Bangalore',
-//           'ticketType': 'AC Sleeper',
-//           'dateOfJourney': DateTime.now().add(const Duration(days: 2)),
-//           'amount': 950,
-//           'paymentStatus': 'completed',
-//           'ticketImageUrl':
-//               'https://via.placeholder.com/150',
-//           'paymentId': 'PAY123456',
-//           'purchasedAt': DateTime.now(),
-//         },
-//       ];
+//     {
+//       'busName': 'KSRTC Swift',
+//       'pickupPoint': 'Calicut',
+//       'dropPoint': 'Bangalore',
+//       'ticketType': 'AC Sleeper',
+//       'dateOfJourney': DateTime.now().add(const Duration(days: 2)),
+//       'amount': 950,
+//       'paymentStatus': 'completed',
+//       'ticketImageUrl': 'https://via.placeholder.com/150',
+//       'paymentId': 'PAY123456',
+//       'purchasedAt': DateTime.now(),
+//     },
+//   ];
 
 //   /// ================= UI =================
 //   @override
@@ -1113,18 +84,67 @@
 
 //   /// ================= MOVIE TAB =================
 //   Widget _buildMovieTicketsTab(BuildContext context) {
-//     if (_movieTickets.isEmpty) {
-//       return _emptyState(
-//         Icons.movie_outlined,
-//         'No movie tickets purchased yet',
-//       );
-//     }
+//     return Consumer<TicketProvider>(
+//       builder: (context, ticketProvider, child) {
+//         if (ticketProvider.isLoading) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//           );
+//         }
 
-//     return ListView.builder(
-//       padding: const EdgeInsets.all(16),
-//       itemCount: _movieTickets.length,
-//       itemBuilder: (_, i) =>
-//           _buildMovieTicketCard(context, _movieTickets[i]),
+//         if (ticketProvider.errorMessage != null) {
+//           return Center(
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Icon(Icons.error_outline, size: 72, color: Colors.red[300]),
+//                 const SizedBox(height: 16),
+//                 Padding(
+//                   padding: const EdgeInsets.symmetric(horizontal: 32),
+//                   child: Text(
+//                     ticketProvider.errorMessage!,
+//                     style: TextStyle(fontSize: 16, color: Colors.red[700]),
+//                     textAlign: TextAlign.center,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 24),
+//                 ElevatedButton.icon(
+//                   icon: const Icon(Icons.refresh),
+//                   label: const Text('Retry'),
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: const Color(0xFF1976D2),
+//                     padding: const EdgeInsets.symmetric(
+//                       horizontal: 32,
+//                       vertical: 12,
+//                     ),
+//                   ),
+//                   onPressed: () => ticketProvider.refreshTickets(),
+//                 ),
+//               ],
+//             ),
+//           );
+//         }
+
+//         if (ticketProvider.orders.isEmpty) {
+//           return _emptyState(
+//             Icons.movie_outlined,
+//             'No movie tickets purchased yet',
+//           );
+//         }
+
+//         return RefreshIndicator(
+//           onRefresh: () => ticketProvider.refreshTickets(),
+//           color: const Color(0xFF1976D2),
+//           child: ListView.builder(
+//             padding: const EdgeInsets.all(16),
+//             itemCount: ticketProvider.orders.length,
+//             itemBuilder: (_, i) {
+//               final order = ticketProvider.orders[i];
+//               return _buildMovieOrderCard(context, order);
+//             },
+//           ),
+//         );
+//       },
 //     );
 //   }
 
@@ -1140,33 +160,314 @@
 //     return ListView.builder(
 //       padding: const EdgeInsets.all(16),
 //       itemCount: _busTickets.length,
-//       itemBuilder: (_, i) =>
-//           _buildBusTicketCard(context, _busTickets[i]),
+//       itemBuilder: (_, i) => _buildBusTicketCard(context, _busTickets[i]),
 //     );
 //   }
 
-//   /// ================= MOVIE CARD =================
-//   Widget _buildMovieTicketCard(
-//       BuildContext context, Map<String, dynamic> ticket) {
-//     return _card(
-//       Column(
+//   /// ================= MOVIE ORDER CARD =================
+//   Widget _buildMovieOrderCard(BuildContext context, OrderModel order) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.grey.withOpacity(.1),
+//             blurRadius: 8,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
-//           ListTile(
-//             leading: const Icon(Icons.movie, size: 40),
-//             title: Text(ticket['movieName']),
-//             subtitle: Text(
-//               '${_formatDate(ticket['showDate'])}, ${ticket['showTime']}\n${ticket['theatrePlace']}',
-//             ),
-//             trailing: Text(
-//               '₹${ticket['totalPrice']}',
-//               style: const TextStyle(
-//                 fontSize: 16,
-//                 fontWeight: FontWeight.bold,
-//                 color: Color(0xFF1976D2),
+//           // Order Header
+//           Container(
+//             padding: const EdgeInsets.all(12),
+//             decoration: BoxDecoration(
+//               color: _getStatusColor(order.orderStatus).withOpacity(0.1),
+//               borderRadius: const BorderRadius.only(
+//                 topLeft: Radius.circular(12),
+//                 topRight: Radius.circular(12),
 //               ),
 //             ),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       'Order #${order.orderId.substring(order.orderId.length - 8)}',
+//                       style: const TextStyle(
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 14,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 4),
+//                     Text(
+//                       _formatDateTime(order.createdAt),
+//                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+//                     ),
+//                   ],
+//                 ),
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 12,
+//                     vertical: 6,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: _getStatusColor(order.orderStatus),
+//                     borderRadius: BorderRadius.circular(20),
+//                   ),
+//                   child: Text(
+//                     order.orderStatus.toUpperCase(),
+//                     style: const TextStyle(
+//                       color: Colors.white,
+//                       fontSize: 11,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
 //           ),
-//           _downloadButton(context, ticket, 'movie'),
+
+//           // Tickets List
+//           ...order.tickets.map(
+//             (ticket) => _buildMovieTicketItem(context, ticket, order),
+//           ),
+
+//           // Order Footer
+//           Container(
+//             padding: const EdgeInsets.all(12),
+//             decoration: BoxDecoration(
+//               color: Colors.grey[50],
+//               borderRadius: const BorderRadius.only(
+//                 bottomLeft: Radius.circular(12),
+//                 bottomRight: Radius.circular(12),
+//               ),
+//             ),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       'Total Amount',
+//                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+//                     ),
+//                     const SizedBox(height: 2),
+//                     Text(
+//                       '₹${order.totalAmount}',
+//                       style: const TextStyle(
+//                         fontSize: 18,
+//                         fontWeight: FontWeight.bold,
+//                         color: Color(0xFF1976D2),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 Column(
+//                   crossAxisAlignment: CrossAxisAlignment.end,
+//                   children: [
+//                     Text(
+//                       'Payment',
+//                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+//                     ),
+//                     const SizedBox(height: 2),
+//                     Row(
+//                       children: [
+//                         Icon(
+//                           order.paymentStatus == 'paid'
+//                               ? Icons.check_circle
+//                               : Icons.pending,
+//                           size: 16,
+//                           color: order.paymentStatus == 'paid'
+//                               ? Colors.green
+//                               : Colors.orange,
+//                         ),
+//                         const SizedBox(width: 4),
+//                         Text(
+//                           order.paymentStatus.toUpperCase(),
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             fontWeight: FontWeight.bold,
+//                             color: order.paymentStatus == 'paid'
+//                                 ? Colors.green
+//                                 : Colors.orange,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   /// ================= MOVIE TICKET ITEM =================
+//   Widget _buildMovieTicketItem(
+//     BuildContext context,
+//     TicketModel ticket,
+//     OrderModel order,
+//   ) {
+//     return Container(
+//       padding: const EdgeInsets.all(12),
+//       decoration: BoxDecoration(
+//         border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+//       ),
+//       child: Column(
+//         children: [
+//           Row(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // Movie Poster
+//               ClipRRect(
+//                 borderRadius: BorderRadius.circular(8),
+//                 child: Image.network(
+//                   ticket.fullImageUrl,
+//                   width: 80,
+//                   height: 100,
+//                   fit: BoxFit.cover,
+//                   errorBuilder: (context, error, stackTrace) {
+//                     return Container(
+//                       width: 80,
+//                       height: 100,
+//                       color: Colors.grey[300],
+//                       child: const Icon(
+//                         Icons.movie,
+//                         size: 40,
+//                         color: Colors.grey,
+//                       ),
+//                     );
+//                   },
+//                   loadingBuilder: (context, child, loadingProgress) {
+//                     if (loadingProgress == null) return child;
+//                     return Container(
+//                       width: 80,
+//                       height: 100,
+//                       color: Colors.grey[200],
+//                       child: const Center(
+//                         child: CircularProgressIndicator(strokeWidth: 2),
+//                       ),
+//                     );
+//                   },
+//                 ),
+//               ),
+//               const SizedBox(width: 12),
+
+//               // Movie Details
+//               Expanded(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       ticket.movieName,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.bold,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 6),
+//                     Row(
+//                       children: [
+//                         Icon(
+//                           Icons.calendar_today,
+//                           size: 14,
+//                           color: Colors.grey[600],
+//                         ),
+//                         const SizedBox(width: 4),
+//                         Text(
+//                           _formatDate(ticket.showDate),
+//                           style: TextStyle(
+//                             fontSize: 13,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         const SizedBox(width: 12),
+//                         Icon(
+//                           Icons.access_time,
+//                           size: 14,
+//                           color: Colors.grey[600],
+//                         ),
+//                         const SizedBox(width: 4),
+//                         Text(
+//                           ticket.showTime,
+//                           style: TextStyle(
+//                             fontSize: 13,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                     const SizedBox(height: 6),
+//                     Container(
+//                       padding: const EdgeInsets.symmetric(
+//                         horizontal: 8,
+//                         vertical: 4,
+//                       ),
+//                       decoration: BoxDecoration(
+//                         color: const Color(0xFF1976D2).withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(4),
+//                       ),
+//                       child: Text(
+//                         ticket.ticketCategory,
+//                         style: const TextStyle(
+//                           fontSize: 11,
+//                           color: Color(0xFF1976D2),
+//                           fontWeight: FontWeight.w600,
+//                         ),
+//                       ),
+//                     ),
+//                     const SizedBox(height: 6),
+//                     Text(
+//                       'Seats: ${ticket.selectedSeats.join(", ")}',
+//                       style: TextStyle(
+//                         fontSize: 12,
+//                         color: Colors.grey[700],
+//                         fontWeight: FontWeight.w500,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 4),
+//                     Text(
+//                       '₹${ticket.pricePerTicket} × ${ticket.selectedSeats.length} = ₹${ticket.pricePerTicket * ticket.selectedSeats.length}',
+//                       style: const TextStyle(
+//                         fontSize: 13,
+//                         fontWeight: FontWeight.bold,
+//                         color: Color(0xFF1976D2),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//           const SizedBox(height: 12),
+
+//           // Download Button
+//           SizedBox(
+//             width: double.infinity,
+//             child: ElevatedButton.icon(
+//               icon: const Icon(Icons.save_alt, size: 18),
+//               label: const Text('Download Ticket'),
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: const Color(0xFF1976D2),
+//                 foregroundColor: Colors.white,
+//                 padding: const EdgeInsets.symmetric(vertical: 10),
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//               ),
+//               onPressed: () => _downloadMovieTicket(context, ticket),
+//             ),
+//           ),
 //         ],
 //       ),
 //     );
@@ -1174,7 +475,9 @@
 
 //   /// ================= BUS CARD =================
 //   Widget _buildBusTicketCard(
-//       BuildContext context, Map<String, dynamic> ticket) {
+//     BuildContext context,
+//     Map<String, dynamic> ticket,
+//   ) {
 //     return _card(
 //       Column(
 //         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1209,10 +512,7 @@
 //         color: Colors.white,
 //         borderRadius: BorderRadius.circular(12),
 //         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(.1),
-//             blurRadius: 8,
-//           ),
+//           BoxShadow(color: Colors.grey.withOpacity(.1), blurRadius: 8),
 //         ],
 //       ),
 //       child: child,
@@ -1244,7 +544,7 @@
 //         children: [
 //           Icon(icon, size: 72, color: Colors.grey),
 //           const SizedBox(height: 12),
-//           Text(text, style: const TextStyle(fontSize: 16)),
+//           Text(text, style: const TextStyle(fontSize: 16, color: Colors.grey)),
 //         ],
 //       ),
 //     );
@@ -1252,24 +552,97 @@
 
 //   /// ================= HELPERS =================
 //   String _formatDate(DateTime date) {
-//     const months = [
-//       'Jan',
-//       'Feb',
-//       'Mar',
-//       'Apr',
-//       'May',
-//       'Jun',
-//       'Jul',
-//       'Aug',
-//       'Sep',
-//       'Oct',
-//       'Nov',
-//       'Dec'
-//     ];
-//     return '${date.day} ${months[date.month - 1]} ${date.year}';
+//     return DateFormat('dd MMM yyyy').format(date);
 //   }
 
-//   /// ================= DOWNLOAD =================
+//   String _formatDateTime(DateTime date) {
+//     return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+//   }
+
+//   Color _getStatusColor(String status) {
+//     switch (status.toLowerCase()) {
+//       case 'completed':
+//         return Colors.green;
+//       case 'pending':
+//         return Colors.orange;
+//       case 'cancelled':
+//         return Colors.red;
+//       default:
+//         return Colors.grey;
+//     }
+//   }
+
+//   /// ================= DOWNLOAD MOVIE TICKET =================
+//   Future<void> _downloadMovieTicket(
+//     BuildContext context,
+//     TicketModel ticket,
+//   ) async {
+//     try {
+//       // Show loading indicator
+//       showDialog(
+//         context: context,
+//         barrierDismissible: false,
+//         builder: (context) => const Center(
+//           child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//         ),
+//       );
+
+//       final imageUrl = ticket.fullImageUrl;
+//       final response = await http.get(Uri.parse(imageUrl));
+
+//       if (response.statusCode != 200) {
+//         throw Exception('Failed to download image');
+//       }
+
+//       final dir = await getTemporaryDirectory();
+//       final file = File(
+//         '${dir.path}/movie_ticket_${ticket.movieName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+//       );
+
+//       await file.writeAsBytes(response.bodyBytes);
+//       await Gal.putImage(file.path);
+
+//       // Close loading dialog
+//       Navigator.pop(context);
+
+//       // Show success message
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Row(
+//             children: const [
+//               Icon(Icons.check_circle, color: Colors.white),
+//               SizedBox(width: 8),
+//               Text('Ticket downloaded  successfully'),
+//             ],
+//           ),
+//           backgroundColor: Colors.green,
+//           behavior: SnackBarBehavior.floating,
+//           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//         ),
+//       );
+//     } catch (e) {
+//       // Close loading dialog
+//       Navigator.pop(context);
+
+//       // Show error message
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Row(
+//             children: [
+//               const Icon(Icons.error_outline, color: Colors.white),
+//               const SizedBox(width: 8),
+//               Expanded(child: Text('Download failed: ${e.toString()}')),
+//             ],
+//           ),
+//           backgroundColor: Colors.red,
+//           behavior: SnackBarBehavior.floating,
+//           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//         ),
+//       );
+//     }
+//   }
+
+//   /// ================= DOWNLOAD BUS TICKET =================
 //   Future<void> _downloadTicket(
 //     BuildContext context,
 //     Map<String, dynamic> ticket,
@@ -1278,16 +651,17 @@
 //     try {
 //       final imageUrl = ticket['ticketImageUrl'];
 //       if (imageUrl == null || imageUrl.isEmpty) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text('No image available')),
-//         );
+//         ScaffoldMessenger.of(
+//           context,
+//         ).showSnackBar(const SnackBar(content: Text('No image available')));
 //         return;
 //       }
 
 //       final response = await http.get(Uri.parse(imageUrl));
 //       final dir = await getTemporaryDirectory();
-//       final file =
-//           File('${dir.path}/ticket_${DateTime.now().millisecondsSinceEpoch}.jpg');
+//       final file = File(
+//         '${dir.path}/ticket_${DateTime.now().millisecondsSinceEpoch}.jpg',
+//       );
 
 //       await file.writeAsBytes(response.bodyBytes);
 //       await Gal.putImage(file.path);
@@ -1299,23 +673,1012 @@
 //         ),
 //       );
 //     } catch (e) {
+//       ScaffoldMessenger.of(
+//         context,
+//       ).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+//     }
+//   }
+// }
+
+// import 'dart:io';
+// import 'package:backup_ticket/helper/auth_helper.dart';
+// import 'package:backup_ticket/model/purchased_ticket_models.dart';
+// import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:gal/gal.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:path_provider/path_provider.dart';
+// import 'package:intl/intl.dart';
+// import 'package:media_scanner/media_scanner.dart';
+
+// class PurchasedTickets extends StatefulWidget {
+//   const PurchasedTickets({super.key});
+
+//   @override
+//   State<PurchasedTickets> createState() => _PurchasedTicketsState();
+// }
+
+// class _PurchasedTicketsState extends State<PurchasedTickets> {
+//   String? userId;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserAndTickets();
+//   }
+
+//     Future<void> _loadUserAndTickets() async {
+//     final user = await SharedPrefsHelper.getUser();
+
+//     if (!mounted) return;
+
+//     setState(() {
+//       userId = user?.id;
+//     });
+
+//     if (userId != null) {
+//       context
+//           .read<PurchasedTicketProvider>()
+//           .fetchPurchasedTickets(userId!);
+//     }
+//   }
+
+//   /// ================= STATIC BUS DATA (UNCHANGED) =================
+//   List<Map<String, dynamic>> get _busTickets => [
+//         {
+//           'busName': 'KSRTC Swift',
+//           'pickupPoint': 'Calicut',
+//           'dropPoint': 'Bangalore',
+//           'ticketType': 'AC Sleeper',
+//           'dateOfJourney': DateTime.now().add(const Duration(days: 2)),
+//           'amount': 950,
+//           'paymentStatus': 'completed',
+//           'ticketImageUrl': 'https://via.placeholder.com/150',
+//         },
+//       ];
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return DefaultTabController(
+//       length: 2,
+//       child: Scaffold(
+//         backgroundColor: Colors.grey[50],
+//         appBar: AppBar(
+//           backgroundColor: Colors.white,
+//           elevation: 0,
+//           title: const Text(
+//             'My Purchased Tickets',
+//             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+//           ),
+//           leading: IconButton(
+//             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+//             onPressed: () => Navigator.pop(context),
+//           ),
+//           bottom: const TabBar(
+//             labelColor: Color(0xFF1976D2),
+//             indicatorColor: Color(0xFF1976D2),
+//             tabs: [
+//               Tab(icon: Icon(Icons.movie), text: 'Movie Tickets'),
+//               Tab(icon: Icon(Icons.directions_bus), text: 'Bus Tickets'),
+//             ],
+//           ),
+//         ),
+//         body: TabBarView(
+//           children: [
+//             _buildMovieTicketsTab(), // 🔥 API BASED
+//             _buildBusTicketsTab(),   // ✅ STATIC
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   /// ================= MOVIE TAB (API BASED) =================
+//   Widget _buildMovieTicketsTab() {
+//     return Consumer<PurchasedTicketProvider>(
+//       builder: (_, provider, __) {
+//         if (provider.isLoading) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//           );
+//         }
+
+//         if (provider.errorMessage != null) {
+//           return Center(child: Text(provider.errorMessage!));
+//         }
+
+//         if (provider.orders.isEmpty) {
+//           return _emptyState(Icons.movie, 'No movie tickets purchased yet');
+//         }
+
+//         return RefreshIndicator(
+//           onRefresh: () => provider.refresh(userId.toString()),
+//           child: ListView.builder(
+//             padding: const EdgeInsets.all(16),
+//             itemCount: provider.orders.length,
+//             itemBuilder: (_, i) =>
+//                 _buildMovieOrderCard(provider.orders[i]),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+//   /// ================= BUS TAB (STATIC – UNCHANGED) =================
+//   Widget _buildBusTicketsTab() {
+//     return ListView.builder(
+//       padding: const EdgeInsets.all(16),
+//       itemCount: _busTickets.length,
+//       itemBuilder: (_, i) => _buildBusTicketCard(_busTickets[i]),
+//     );
+//   }
+
+//   /// ================= MOVIE ORDER CARD =================
+//   Widget _buildMovieOrderCard(PurchasedOrder order) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(color: Colors.grey.withOpacity(.1), blurRadius: 8),
+//         ],
+//       ),
+//       child: Column(
+//         children: [
+//           ListTile(
+//             title: Text(
+//               'Order #${order.orderId.substring(order.orderId.length - 6)}',
+//               style: const TextStyle(fontWeight: FontWeight.bold),
+//             ),
+//             subtitle: Text(
+//               DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt),
+//             ),
+//             trailing: Chip(
+//               label: Text(order.orderStatus.toUpperCase()),
+//               backgroundColor: Colors.green,
+//             ),
+//           ),
+
+//           ...order.tickets.map((t) => _movieTicketItem(t)),
+
+//           Padding(
+//             padding: const EdgeInsets.all(12),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Text(
+//                   '₹${order.totalAmount}',
+//                   style: const TextStyle(
+//                     fontSize: 18,
+//                     fontWeight: FontWeight.bold,
+//                     color: Color(0xFF1976D2),
+//                   ),
+//                 ),
+//                 ElevatedButton.icon(
+//                   icon: const Icon(Icons.picture_as_pdf),
+//                   label: const Text('Invoice'),
+//                   onPressed: () => _downloadPdf(order.pdfUrl),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   /// ================= MOVIE TICKET ITEM =================
+//   Widget _movieTicketItem(PurchasedTicketWrapper wrapper) {
+//     final ticket = wrapper.ticket;
+//     final movie = wrapper.movie;
+
+//     return ListTile(
+//       leading: ClipRRect(
+//         borderRadius: BorderRadius.circular(6),
+//         child: Image.network(
+//           movie.fullImageUrl,
+//           width: 60,
+//           height: 80,
+//           fit: BoxFit.cover,
+//         ),
+//       ),
+//       title: Text(ticket.movieName),
+//       subtitle: Text(
+//         '${DateFormat('dd MMM').format(ticket.showDate)} • ${ticket.showTime}\nSeats: ${ticket.selectedSeats.join(', ')}',
+//       ),
+//     );
+//   }
+
+//   /// ================= BUS CARD (UNCHANGED) =================
+//   Widget _buildBusTicketCard(Map<String, dynamic> ticket) {
+//     return Card(
+//       child: ListTile(
+//         leading: const Icon(Icons.directions_bus, size: 40),
+//         title: Text(ticket['busName']),
+//         subtitle: Text(
+//           '${ticket['pickupPoint']} → ${ticket['dropPoint']}',
+//         ),
+//         trailing: Text(
+//           '₹${ticket['amount']}',
+//           style: const TextStyle(
+//             fontWeight: FontWeight.bold,
+//             color: Color(0xFF1976D2),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _emptyState(IconData icon, String text) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(icon, size: 72, color: Colors.grey),
+//           const SizedBox(height: 12),
+//           Text(text, style: const TextStyle(color: Colors.grey)),
+//         ],
+//       ),
+//     );
+//   }
+
+//   /// ================= DOWNLOAD HELPERS =================
+
+// // Future<void> _downloadPdf(String pdfPath) async {
+// //   try {
+// //     // Loader
+// //     showDialog(
+// //       context: context,
+// //       barrierDismissible: false,
+// //       builder: (_) => const Center(
+// //         child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+// //       ),
+// //     );
+
+// //     final String url = 'http://31.97.206.144:8127$pdfPath';
+
+// //     final response = await http.get(Uri.parse(url));
+
+// //     if (response.statusCode != 200) {
+// //       throw Exception('Failed to download PDF');
+// //     }
+
+// //     // 📂 Save to Downloads (Android) / Documents (iOS)
+// //     final Directory dir = Platform.isAndroid
+// //         ? Directory('/storage/emulated/0/Download')
+// //         : await getApplicationDocumentsDirectory();
+
+// //     final file = File(
+// //       '${dir.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+// //     );
+
+// //     await file.writeAsBytes(response.bodyBytes);
+
+// //     Navigator.pop(context);
+
+// //     ScaffoldMessenger.of(context).showSnackBar(
+// //       SnackBar(
+// //         backgroundColor: Colors.green,
+// //         content: Text('Invoice saved to ${dir.path}'),
+// //       ),
+// //     );
+// //   } catch (e) {
+// //     Navigator.pop(context);
+// //     ScaffoldMessenger.of(context).showSnackBar(
+// //       SnackBar(
+// //         backgroundColor: Colors.red,
+// //         content: Text('PDF download failed: $e'),
+// //       ),
+// //     );
+// //   }
+// // }
+
+// Future<void> _downloadPdf(String pdfPath) async {
+//   try {
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (_) => const Center(
+//         child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//       ),
+//     );
+
+//     final String url = 'http://31.97.206.144:8127$pdfPath';
+//     final response = await http.get(Uri.parse(url));
+
+//     if (response.statusCode != 200) {
+//       throw Exception('Failed to download PDF');
+//     }
+
+//     final Directory dir = Directory('/storage/emulated/0/Download');
+//     final file = File(
+//       '${dir.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+//     );
+
+//     await file.writeAsBytes(response.bodyBytes);
+
+//     // 🔥 THIS MAKES IT APPEAR IN "DOWNLOADS" CATEGORY
+//     await MediaScanner.loadMedia(path: file.path);
+
+//     Navigator.pop(context);
+
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       const SnackBar(
+//         backgroundColor: Colors.green,
+//         content: Text('Invoice downloaded successfully'),
+//       ),
+//     );
+//   } catch (e) {
+//     Navigator.pop(context);
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         backgroundColor: Colors.red,
+//         content: Text('PDF download failed: $e'),
+//       ),
+//     );
+//   }
+// }
+
+// }
+
+// import 'dart:io';
+// import 'package:backup_ticket/helper/auth_helper.dart';
+// import 'package:backup_ticket/model/purchased_ticket_models.dart';
+// import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:gal/gal.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:path_provider/path_provider.dart';
+// import 'package:intl/intl.dart';
+// import 'package:media_scanner/media_scanner.dart';
+
+// class PurchasedTickets extends StatefulWidget {
+//   const PurchasedTickets({super.key});
+
+//   @override
+//   State<PurchasedTickets> createState() => _PurchasedTicketsState();
+// }
+
+// class _PurchasedTicketsState extends State<PurchasedTickets> {
+//   String? userId;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserAndTickets();
+//   }
+
+//   Future<void> _loadUserAndTickets() async {
+//     final user = await SharedPrefsHelper.getUser();
+
+//     if (!mounted) return;
+
+//     setState(() {
+//       userId = user?.id;
+//     });
+
+//     if (userId != null) {
+//       context.read<PurchasedTicketProvider>().fetchPurchasedTickets(userId!);
+//     }
+//   }
+
+//   /// ================= STATIC BUS DATA (UNCHANGED) =================
+//   List<Map<String, dynamic>> get _busTickets => [
+//         {
+//           'busName': 'KSRTC Swift',
+//           'pickupPoint': 'Calicut',
+//           'dropPoint': 'Bangalore',
+//           'ticketType': 'AC Sleeper',
+//           'dateOfJourney': DateTime.now().add(const Duration(days: 2)),
+//           'amount': 950,
+//           'paymentStatus': 'completed',
+//           'ticketImageUrl': 'https://via.placeholder.com/150',
+//         },
+//       ];
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return DefaultTabController(
+//       length: 2,
+//       child: Scaffold(
+//         backgroundColor: Colors.grey[100],
+//         appBar: AppBar(
+//           backgroundColor: Colors.white,
+//           elevation: 0,
+//           title: const Text(
+//             'My Purchased Tickets',
+//             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+//           ),
+//           leading: IconButton(
+//             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+//             onPressed: () => Navigator.pop(context),
+//           ),
+//           bottom: const TabBar(
+//             labelColor: Color(0xFF1976D2),
+//             unselectedLabelColor: Colors.grey,
+//             indicatorColor: Color(0xFF1976D2),
+//             tabs: [
+//               Tab(icon: Icon(Icons.movie), text: 'Movie Tickets'),
+//               Tab(icon: Icon(Icons.directions_bus), text: 'Bus Tickets'),
+//             ],
+//           ),
+//         ),
+//         body: TabBarView(
+//           children: [
+//             _buildMovieTicketsTab(), // 🔥 API BASED
+//             _buildBusTicketsTab(), // ✅ STATIC
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   /// ================= MOVIE TAB (API BASED) =================
+//   Widget _buildMovieTicketsTab() {
+//     return Consumer<PurchasedTicketProvider>(
+//       builder: (_, provider, __) {
+//         if (provider.isLoading) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//           );
+//         }
+
+//         if (provider.errorMessage != null) {
+//           return Center(child: Text(provider.errorMessage!));
+//         }
+
+//         if (provider.orders.isEmpty) {
+//           return _emptyState(Icons.movie, 'No movie tickets purchased yet');
+//         }
+
+//         return RefreshIndicator(
+//           onRefresh: () => provider.refresh(userId.toString()),
+//           child: ListView.builder(
+//             padding: const EdgeInsets.all(16),
+//             itemCount: provider.orders.length,
+//             itemBuilder: (_, i) => _buildMovieOrderCard(provider.orders[i]),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+//   /// ================= BUS TAB (STATIC – UNCHANGED) =================
+//   Widget _buildBusTicketsTab() {
+//     return ListView.builder(
+//       padding: const EdgeInsets.all(16),
+//       itemCount: _busTickets.length,
+//       itemBuilder: (_, i) => _buildBusTicketCard(_busTickets[i]),
+//     );
+//   }
+
+//   /// ================= MOVIE ORDER CARD WITH TICKET DESIGN =================
+//   Widget _buildMovieOrderCard(PurchasedOrder order) {
+//     final ticketStatus =
+//     order.tickets.isNotEmpty ? order.tickets.first.ticket.status : 'unknown';
+
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       child: ClipPath(
+//         clipper: TicketClipper(),
+//         child: Container(
+//           decoration: BoxDecoration(
+//             color: Colors.white,
+//             borderRadius: BorderRadius.circular(12),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: Colors.black.withOpacity(0.1),
+//                 blurRadius: 8,
+//                 offset: Offset(0, 2),
+//               ),
+//             ],
+//           ),
+//           child: Column(
+//             children: [
+//               // Top Section - Order Info
+//               Container(
+//                 padding: const EdgeInsets.all(16),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Row(
+//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                       children: [
+//                         Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           children: [
+//                             Text(
+//                               'Order #${order.orderId.substring(order.orderId.length - 6)}',
+//                               style: const TextStyle(
+//                                 fontWeight: FontWeight.bold,
+//                                 fontSize: 16,
+//                                 color: Colors.black87,
+//                               ),
+//                             ),
+//                             SizedBox(height: 4),
+//                             Text(
+//                               DateFormat('dd MMM yyyy, hh:mm a')
+//                                   .format(order.createdAt),
+//                               style: TextStyle(
+//                                 fontSize: 13,
+//                                 color: Colors.grey[600],
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//   Container(
+//   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//   decoration: BoxDecoration(
+//     color: ticketStatus == 'active'
+//         ? Colors.green[50]
+//         : Colors.red[50],
+//     borderRadius: BorderRadius.circular(12),
+//     border: Border.all(
+//       color: ticketStatus == 'active'
+//           ? Colors.green
+//           : Colors.red,
+//     ),
+//   ),
+//   child: Text(
+//     ticketStatus.toUpperCase(),
+//     style: TextStyle(
+//       fontSize: 11,
+//       fontWeight: FontWeight.bold,
+//       color: ticketStatus == 'active'
+//           ? Colors.green[700]
+//           : Colors.red[700],
+//     ),
+//   ),
+// ),
+
+//                       ],
+//                     ),
+//                     SizedBox(height: 16),
+
+//                     // Movie Tickets List
+//                     ...order.tickets.map((t) => _movieTicketItem(t)),
+//                   ],
+//                 ),
+//               ),
+
+//               // Divider with semicircle cuts
+//               SizedBox(height: 8),
+
+//               // Bottom Section - Price & Download
+//               Container(
+//                 padding: EdgeInsets.all(16),
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                           'Total Amount',
+//                           style: TextStyle(
+//                             fontSize: 13,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         SizedBox(height: 4),
+//                         Text(
+//                           '₹ ${order.totalAmount.toStringAsFixed(2)}',
+//                           style: TextStyle(
+//                             fontSize: 22,
+//                             fontWeight: FontWeight.bold,
+//                             color: Color(0xFF1976D2),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                     ElevatedButton.icon(
+//                       icon: const Icon(Icons.download, size: 18),
+//                       label: const Text('Invoice'),
+//                       style: ElevatedButton.styleFrom(
+//                         backgroundColor: Color(0xFF1976D2),
+//                         foregroundColor: Colors.white,
+//                         padding: EdgeInsets.symmetric(
+//                           horizontal: 16,
+//                           vertical: 12,
+//                         ),
+//                         shape: RoundedRectangleBorder(
+//                           borderRadius: BorderRadius.circular(8),
+//                         ),
+//                       ),
+//                       onPressed: () => _downloadPdf(order.pdfUrl),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   /// ================= MOVIE TICKET ITEM =================
+//   Widget _movieTicketItem(PurchasedTicketWrapper wrapper) {
+//     final ticket = wrapper.ticket;
+//     final movie = wrapper.movie;
+
+//     return Container(
+//       margin: EdgeInsets.only(bottom: 12),
+//       padding: EdgeInsets.all(12),
+//       decoration: BoxDecoration(
+//         color: Colors.grey[50],
+//         borderRadius: BorderRadius.circular(8),
+//         border: Border.all(color: Colors.grey[200]!),
+//       ),
+//       child: Row(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Movie Poster
+//           ClipRRect(
+//             borderRadius: BorderRadius.circular(6),
+//             child: Image.network(
+//               movie.fullImageUrl,
+//               width: 60,
+//               height: 80,
+//               fit: BoxFit.cover,
+//               errorBuilder: (_, __, ___) => Container(
+//                 width: 60,
+//                 height: 80,
+//                 color: Colors.grey[300],
+//                 child: Icon(Icons.movie, size: 30),
+//               ),
+//             ),
+//           ),
+//           SizedBox(width: 12),
+
+//           // Movie Details
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   ticket.movieName,
+//                   style: TextStyle(
+//                     fontSize: 15,
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.black87,
+//                   ),
+//                 ),
+//                 SizedBox(height: 6),
+//                 Row(
+//                   children: [
+//                     Icon(Icons.calendar_today, size: 13, color: Colors.grey[600]),
+//                     SizedBox(width: 4),
+//                     Text(
+//                       '${DateFormat('dd MMM yyyy').format(ticket.showDate)} • ${ticket.showTime}',
+//                       style: TextStyle(
+//                         fontSize: 13,
+//                         color: Colors.grey[700],
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 SizedBox(height: 6),
+//                 Row(
+//                   children: [
+//                     Icon(Icons.event_seat, size: 13, color: Colors.grey[600]),
+//                     SizedBox(width: 4),
+//                     Expanded(
+//                       child: Text(
+//                         'Seats: ${ticket.selectedSeats.join(', ')}',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[700],
+//                           fontWeight: FontWeight.w500,
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   /// ================= BUS CARD WITH TICKET DESIGN =================
+//   Widget _buildBusTicketCard(Map<String, dynamic> ticket) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       child: ClipPath(
+//         clipper: TicketClipper(),
+//         child: Container(
+//           decoration: BoxDecoration(
+//             color: Colors.white,
+//             borderRadius: BorderRadius.circular(12),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: Colors.black.withOpacity(0.1),
+//                 blurRadius: 8,
+//                 offset: Offset(0, 2),
+//               ),
+//             ],
+//           ),
+//           child: Column(
+//             children: [
+//               // Top Section
+//               Padding(
+//                 padding: const EdgeInsets.all(16.0),
+//                 child: Row(
+//                   children: [
+//                     Container(
+//                       width: 60,
+//                       height: 60,
+//                       decoration: BoxDecoration(
+//                         color: Color(0xFF1976D2).withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(8),
+//                       ),
+//                       child: Icon(
+//                         Icons.directions_bus,
+//                         size: 32,
+//                         color: Color(0xFF1976D2),
+//                       ),
+//                     ),
+//                     SizedBox(width: 12),
+//                     Expanded(
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text(
+//                             ticket['busName'],
+//                             style: TextStyle(
+//                               fontSize: 17,
+//                               fontWeight: FontWeight.bold,
+//                               color: Colors.black87,
+//                             ),
+//                           ),
+//                           SizedBox(height: 4),
+//                           Text(
+//                             ticket['ticketType'],
+//                             style: TextStyle(
+//                               fontSize: 13,
+//                               color: Colors.grey[600],
+//                             ),
+//                           ),
+//                           SizedBox(height: 8),
+//                           Row(
+//                             children: [
+//                               Text(
+//                                 ticket['pickupPoint'],
+//                                 style: TextStyle(
+//                                   fontSize: 14,
+//                                   fontWeight: FontWeight.w600,
+//                                   color: Colors.black87,
+//                                 ),
+//                               ),
+//                               Padding(
+//                                 padding: EdgeInsets.symmetric(horizontal: 8),
+//                                 child: Icon(
+//                                   Icons.arrow_forward,
+//                                   size: 16,
+//                                   color: Colors.grey[600],
+//                                 ),
+//                               ),
+//                               Text(
+//                                 ticket['dropPoint'],
+//                                 style: TextStyle(
+//                                   fontSize: 14,
+//                                   fontWeight: FontWeight.w600,
+//                                   color: Colors.black87,
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+
+//               // Divider with semicircle cuts
+//               SizedBox(height: 8),
+
+//               // Bottom Section
+//               Container(
+//                 padding: EdgeInsets.all(16),
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                           'Date of Journey',
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         SizedBox(height: 4),
+//                         Text(
+//                           DateFormat('dd MMM yyyy')
+//                               .format(ticket['dateOfJourney']),
+//                           style: TextStyle(
+//                             fontSize: 15,
+//                             fontWeight: FontWeight.w600,
+//                             color: Colors.black87,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.end,
+//                       children: [
+//                         Text(
+//                           'Fare',
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         SizedBox(height: 4),
+//                         Text(
+//                           '₹ ${ticket['amount']}',
+//                           style: TextStyle(
+//                             fontSize: 20,
+//                             fontWeight: FontWeight.bold,
+//                             color: Color(0xFF1976D2),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _emptyState(IconData icon, String text) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(icon, size: 72, color: Colors.grey),
+//           const SizedBox(height: 12),
+//           Text(text, style: const TextStyle(color: Colors.grey)),
+//         ],
+//       ),
+//     );
+//   }
+
+//   /// ================= DOWNLOAD HELPERS =================
+//   Future<void> _downloadPdf(String pdfPath) async {
+//     try {
+//       showDialog(
+//         context: context,
+//         barrierDismissible: false,
+//         builder: (_) => const Center(
+//           child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//         ),
+//       );
+
+//       final String url = 'http://31.97.206.144:8127$pdfPath';
+//       final response = await http.get(Uri.parse(url));
+
+//       if (response.statusCode != 200) {
+//         throw Exception('Failed to download PDF');
+//       }
+
+//       final Directory dir = Directory('/storage/emulated/0/Download');
+//       final file = File(
+//         '${dir.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+//       );
+
+//       await file.writeAsBytes(response.bodyBytes);
+
+//       // 🔥 THIS MAKES IT APPEAR IN "DOWNLOADS" CATEGORY
+//       await MediaScanner.loadMedia(path: file.path);
+
+//       Navigator.pop(context);
+
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Download failed: $e')),
+//         const SnackBar(
+//           backgroundColor: Colors.green,
+//           content: Text('Invoice downloaded successfully'),
+//         ),
+//       );
+//     } catch (e) {
+//       Navigator.pop(context);
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           backgroundColor: Colors.red,
+//           content: Text('PDF download failed: $e'),
+//         ),
 //       );
 //     }
 //   }
 // }
 
-import 'dart:io';
-import 'package:backup_ticket/provider/purchaseticket/purchase_ticket_provider.dart';
-import 'package:backup_ticket/services/purchase_ticket_service.dart';
-import 'package:flutter/material.dart';
-import 'package:gal/gal.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
+// /// ================= TICKET CLIPPER =================
+// class TicketClipper extends CustomClipper<Path> {
+//   @override
+//   Path getClip(Size size) {
+//     final path = Path();
+//     const radius = 12.0;
+//     const semicircleRadius = 12.0;
 
+//     // Start from top-left
+//     path.moveTo(radius, 0);
+
+//     // Top edge
+//     path.lineTo(size.width - radius, 0);
+//     path.arcToPoint(
+//       Offset(size.width, radius),
+//       radius: Radius.circular(radius),
+//     );
+
+//     // Right edge with semicircle cut (middle)
+//     double middleY = size.height * 0.65;
+//     path.lineTo(size.width, middleY - semicircleRadius);
+//     path.arcToPoint(
+//       Offset(size.width, middleY + semicircleRadius),
+//       radius: Radius.circular(semicircleRadius),
+//       clockwise: false,
+//     );
+
+//     // Continue right edge
+//     path.lineTo(size.width, size.height - radius);
+//     path.arcToPoint(
+//       Offset(size.width - radius, size.height),
+//       radius: Radius.circular(radius),
+//     );
+
+//     // Bottom edge
+//     path.lineTo(radius, size.height);
+//     path.arcToPoint(
+//       Offset(0, size.height - radius),
+//       radius: Radius.circular(radius),
+//     );
+
+//     // Left edge with semicircle cut (middle)
+//     path.lineTo(0, middleY + semicircleRadius);
+//     path.arcToPoint(
+//       Offset(0, middleY - semicircleRadius),
+//       radius: Radius.circular(semicircleRadius),
+//       clockwise: false,
+//     );
+
+//     // Continue left edge
+//     path.lineTo(0, radius);
+//     path.arcToPoint(
+//       Offset(radius, 0),
+//       radius: Radius.circular(radius),
+//     );
+
+//     path.close();
+//     return path;
+//   }
+
+//   @override
+//   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+// }
+
+import 'dart:io';
+import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/model/purchased_ticket_models.dart';
+import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:gal/gal.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:media_scanner/media_scanner.dart';
 
 class PurchasedTickets extends StatefulWidget {
   const PurchasedTickets({super.key});
@@ -1325,19 +1688,29 @@ class PurchasedTickets extends StatefulWidget {
 }
 
 class _PurchasedTicketsState extends State<PurchasedTickets> {
+  String? userId;
+
   @override
   void initState() {
     super.initState();
-    // Fetch tickets when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TicketProvider>(
-        context,
-        listen: false,
-      ).fetchPurchasedTickets();
-    });
+    _loadUserAndTickets();
   }
 
-  /// ================= DUMMY DATA FOR BUS TICKETS =================
+  Future<void> _loadUserAndTickets() async {
+    final user = await SharedPrefsHelper.getUser();
+
+    if (!mounted) return;
+
+    setState(() {
+      userId = user?.id;
+    });
+
+    if (userId != null) {
+      context.read<PurchasedTicketProvider>().fetchPurchasedTickets(userId!);
+    }
+  }
+
+  /// ================= STATIC BUS DATA (UNCHANGED) =================
   List<Map<String, dynamic>> get _busTickets => [
     {
       'busName': 'KSRTC Swift',
@@ -1348,18 +1721,15 @@ class _PurchasedTicketsState extends State<PurchasedTickets> {
       'amount': 950,
       'paymentStatus': 'completed',
       'ticketImageUrl': 'https://via.placeholder.com/150',
-      'paymentId': 'PAY123456',
-      'purchasedAt': DateTime.now(),
     },
   ];
 
-  /// ================= UI =================
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.grey[100],
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -1373,383 +1743,697 @@ class _PurchasedTicketsState extends State<PurchasedTickets> {
           ),
           bottom: const TabBar(
             labelColor: Color(0xFF1976D2),
+            unselectedLabelColor: Colors.grey,
             indicatorColor: Color(0xFF1976D2),
             tabs: [
               Tab(icon: Icon(Icons.movie), text: 'Movie Tickets'),
-              Tab(icon: Icon(Icons.directions_bus), text: 'Bus Tickets'),
+              // Tab(icon: Icon(Icons.directions_bus), text: 'Bus Tickets'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _buildMovieTicketsTab(context),
-            _buildBusTicketsTab(context),
+            _buildMovieTicketsTab(), // 🔥 API BASED
+            // _buildBusTicketsTab(), // ✅ STATIC
           ],
         ),
       ),
     );
   }
 
-  /// ================= MOVIE TAB =================
-  Widget _buildMovieTicketsTab(BuildContext context) {
-    return Consumer<TicketProvider>(
-      builder: (context, ticketProvider, child) {
-        if (ticketProvider.isLoading) {
+  /// ================= MOVIE TAB (API BASED) =================
+  Widget _buildMovieTicketsTab() {
+    return Consumer<PurchasedTicketProvider>(
+      builder: (_, provider, __) {
+        if (provider.isLoading) {
           return const Center(
             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
           );
         }
 
-        if (ticketProvider.errorMessage != null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 72, color: Colors.red[300]),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    ticketProvider.errorMessage!,
-                    style: TextStyle(fontSize: 16, color: Colors.red[700]),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1976D2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                  ),
-                  onPressed: () => ticketProvider.refreshTickets(),
-                ),
-              ],
-            ),
-          );
+        if (provider.errorMessage != null) {
+          return Center(child: Text(provider.errorMessage!));
         }
 
-        if (ticketProvider.orders.isEmpty) {
-          return _emptyState(
-            Icons.movie_outlined,
-            'No movie tickets purchased yet',
-          );
+        if (provider.orders.isEmpty) {
+          return _emptyState(Icons.movie, 'No movie tickets purchased yet');
         }
 
         return RefreshIndicator(
-          onRefresh: () => ticketProvider.refreshTickets(),
-          color: const Color(0xFF1976D2),
+          onRefresh: () => provider.refresh(userId.toString()),
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: ticketProvider.orders.length,
-            itemBuilder: (_, i) {
-              final order = ticketProvider.orders[i];
-              return _buildMovieOrderCard(context, order);
-            },
+            itemCount: provider.orders.length,
+            itemBuilder: (_, i) => _buildMovieOrderCard(provider.orders[i]),
           ),
         );
       },
     );
   }
 
-  /// ================= BUS TAB =================
-  Widget _buildBusTicketsTab(BuildContext context) {
-    if (_busTickets.isEmpty) {
-      return _emptyState(
-        Icons.directions_bus_outlined,
-        'No bus tickets purchased yet',
-      );
-    }
-
+  /// ================= BUS TAB (STATIC – UNCHANGED) =================
+  Widget _buildBusTicketsTab() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _busTickets.length,
-      itemBuilder: (_, i) => _buildBusTicketCard(context, _busTickets[i]),
+      itemBuilder: (_, i) => _buildBusTicketCard(_busTickets[i]),
     );
   }
 
-  /// ================= MOVIE ORDER CARD =================
-  Widget _buildMovieOrderCard(BuildContext context, OrderModel order) {
+  /// ================= MOVIE ORDER CARD WITH TICKET DESIGN =================
+  Widget _buildMovieOrderCard(PurchasedOrder order) {
+    final ticketStatus = order.tickets.isNotEmpty
+        ? order.tickets.first.ticket.status
+        : 'unknown';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Order Header
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _getStatusColor(order.orderStatus).withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+      child: ClipPath(
+        clipper: TicketClipper(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
+            ],
+          ),
+          child: Column(
+            children: [
+              // Top Section - Order Info
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Order #${order.orderId.substring(order.orderId.length - 8)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatDateTime(order.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(order.orderStatus),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    order.orderStatus.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Tickets List
-          ...order.tickets.map(
-            (ticket) => _buildMovieTicketItem(context, ticket, order),
-          ),
-
-          // Order Footer
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Amount',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₹${order.totalAmount}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1976D2),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Payment',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 2),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          order.paymentStatus == 'paid'
-                              ? Icons.check_circle
-                              : Icons.pending,
-                          size: 16,
-                          color: order.paymentStatus == 'paid'
-                              ? Colors.green
-                              : Colors.orange,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Order #${order.orderId.substring(order.orderId.length - 6)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              DateFormat(
+                                'dd MMM yyyy, hh:mm a',
+                              ).format(order.createdAt),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          order.paymentStatus.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: order.paymentStatus == 'paid'
-                                ? Colors.green
-                                : Colors.orange,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: ticketStatus == 'active'
+                                ? Colors.green[50]
+                                : Colors.red[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: ticketStatus == 'active'
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                          child: Text(
+                            ticketStatus.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: ticketStatus == 'active'
+                                  ? Colors.green[700]
+                                  : Colors.red[700],
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    SizedBox(height: 16),
+
+                    // Movie Tickets List
+                    ...order.tickets.map((t) => _movieTicketItem(t)),
                   ],
                 ),
-              ],
-            ),
+              ),
+
+              // Divider with semicircle cuts
+              SizedBox(height: 8),
+
+              // Bottom Section - Price & Download
+              Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '₹ ${order.totalAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1976D2),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        // Preview Button
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.visibility, size: 18),
+                          label: const Text('Preview'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF1976D2),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () => _showTicketPreview(order),
+                        ),
+                        // SizedBox(width: 8),
+                        // // Invoice Button
+                        // ElevatedButton.icon(
+                        //   icon: const Icon(Icons.download, size: 18),
+                        //   label: const Text('Invoice'),
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: Color(0xFF1976D2),
+                        //     foregroundColor: Colors.white,
+                        //     padding: EdgeInsets.symmetric(
+                        //       horizontal: 16,
+                        //       vertical: 12,
+                        //     ),
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(8),
+                        //     ),
+                        //   ),
+                        //   onPressed: () => _downloadPdf(order.pdfUrl),
+                        // ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   /// ================= MOVIE TICKET ITEM =================
-  Widget _buildMovieTicketItem(
-    BuildContext context,
-    TicketModel ticket,
-    OrderModel order,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Movie Poster
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  ticket.fullImageUrl,
-                  width: 80,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 80,
-                      height: 100,
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.movie,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      width: 80,
-                      height: 100,
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
+  Widget _movieTicketItem(PurchasedTicketWrapper wrapper) {
+    final ticket = wrapper.ticket;
+    final movie = wrapper.movie;
 
-              // Movie Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Movie Poster
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.network(
+              movie.fullImageUrl,
+              width: 60,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 60,
+                height: 80,
+                color: Colors.grey[300],
+                child: Icon(Icons.movie, size: 30),
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+
+          // Movie Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ticket.movieName,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Row(
                   children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 13,
+                      color: Colors.grey[600],
+                    ),
+                    SizedBox(width: 4),
                     Text(
-                      ticket.movieName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      '${DateFormat('dd MMM yyyy').format(ticket.showDate)} • ${ticket.showTime}',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.event_seat, size: 13, color: Colors.grey[600]),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Seats: ${ticket.selectedSeats.join(', ')}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ================= TICKET PREVIEW DIALOG =================
+  void _showTicketPreview(PurchasedOrder order) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Close button
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close, color: Colors.black),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              SizedBox(height: 8),
+              // Ticket Preview Cards
+              ...order.tickets.map((ticket) => _buildTicketPreviewCard(ticket)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ================= TICKET PREVIEW CARD (BOOKMYSHOW STYLE) =================
+Widget _buildTicketPreviewCard(PurchasedTicketWrapper wrapper) {
+  final ticket = wrapper.ticket;
+  final movie = wrapper.movie;
+
+  return Container(
+    margin: EdgeInsets.only(bottom: 16),
+    child: Stack(
+      children: [
+        // Main ticket container
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Top section with movie details
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Header with logo and backup ticket badge
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(ticket.showDate),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            'assets/appstore.png',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 50,
+                              height: 50,
+                              color: Colors.grey[300],
+                              child: Icon(Icons.movie, size: 40),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          ticket.showTime,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Backup Ticket',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                    SizedBox(height: 20),
+
+                    // Movie poster and details
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            movie.fullImageUrl,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 80,
+                              height: 80,
+                              color: Colors.grey[300],
+                              child: Icon(Icons.movie, size: 40),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ticket.movieName,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '${ticket.language}, ${ticket.ticketType}',
+                                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+
+                    // Date, time and theatre
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                DateFormat('EEE, dd MMM').format(ticket.showDate),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                ticket.showTime,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ticket.theatrePlace,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Dotted separator with circular cutouts
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Dotted line
+                  CustomPaint(
+                    size: Size(double.infinity, 1),
+                    painter: DottedLinePainter(),
+                  ),
+                  // Left circle cutout
+                  Positioned(
+                    left: -10,
+                    child: Container(
+                      width: 20,
+                      height: 20,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1976D2).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
                       ),
-                      child: Text(
-                        ticket.ticketCategory,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF1976D2),
-                          fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  // Right circle cutout
+                  Positioned(
+                    right: -10,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Bottom section with ticket details
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Seats and Screen
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${ticket.quantity} Ticket(s)',
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              ticket.screen,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'SEATS',
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              ticket.selectedSeats.isNotEmpty
+                                  ? ticket.selectedSeats
+                                      .map((seat) {
+                                        final parts = seat.split(',');
+                                        if (parts.length != 2) return seat;
+                                        final row = parts[0].replaceAll('Row', '').trim();
+                                        final number = parts[1].replaceAll('Seat', '').trim();
+                                        return '$row$number';
+                                      })
+                                      .join(', ')
+                                  : 'N/A',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // QR Code
+                    Center(
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Image.network(
+                          ticket.fullQrUrl,
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 120,
+                            height: 120,
+                            color: Colors.grey[200],
+                            child: Icon(Icons.error, size: 80),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Seats: ${ticket.selectedSeats.join(", ")}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
+
+                    SizedBox(height: 20),
+
+                    // Booking ID
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'BOOKING ID: ',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          ),
+                          Text(
+                            ticket.ticketId.substring(
+                              ticket.ticketId.length > 8
+                                  ? ticket.ticketId.length - 8
+                                  : 0,
+                            ),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹${ticket.pricePerTicket} × ${ticket.selectedSeats.length} = ₹${ticket.pricePerTicket * ticket.selectedSeats.length}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1976D2),
+
+                    SizedBox(height: 16),
+
+                    // Total Amount
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: Colors.grey[300]!, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Amount',
+                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                          ),
+                          Text(
+                            '₹ ${ticket.totalPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1757,90 +2441,168 @@ class _PurchasedTicketsState extends State<PurchasedTickets> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+        ),
+      ],
+    ),
+  );
+}
 
-          // Download Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.save_alt, size: 18),
-              label: const Text('Download Ticket'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1976D2),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () => _downloadMovieTicket(context, ticket),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  /// ================= BUS CARD =================
-  Widget _buildBusTicketCard(
-    BuildContext context,
-    Map<String, dynamic> ticket,
-  ) {
-    return _card(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.directions_bus, size: 40),
-            title: Text(ticket['busName']),
-            subtitle: Text(
-              '${ticket['pickupPoint']} → ${ticket['dropPoint']}\n${_formatDate(ticket['dateOfJourney'])}',
-            ),
-            trailing: Text(
-              '₹${ticket['amount']}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1976D2),
-              ),
-            ),
-          ),
-          _downloadButton(context, ticket, 'bus'),
-        ],
-      ),
-    );
-  }
 
-  /// ================= COMMON =================
-  Widget _card(Widget child) {
+  /// ================= BUS CARD WITH TICKET DESIGN =================
+  Widget _buildBusTicketCard(Map<String, dynamic> ticket) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(.1), blurRadius: 8),
-        ],
-      ),
-      child: child,
-    );
-  }
+      child: ClipPath(
+        clipper: TicketClipper(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Top Section
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1976D2).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.directions_bus,
+                        size: 32,
+                        color: Color(0xFF1976D2),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ticket['busName'],
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            ticket['ticketType'],
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                ticket['pickupPoint'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(
+                                  Icons.arrow_forward,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                ticket['dropPoint'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-  Widget _downloadButton(
-    BuildContext context,
-    Map<String, dynamic> ticket,
-    String type,
-  ) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.save_alt),
-        label: const Text('Download Ticket'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1976D2),
+              // Divider with semicircle cuts
+              SizedBox(height: 8),
+
+              // Bottom Section
+              Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Date of Journey',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          DateFormat(
+                            'dd MMM yyyy',
+                          ).format(ticket['dateOfJourney']),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Fare',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '₹ ${ticket['amount']}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1976D2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        onPressed: () => _downloadTicket(context, ticket, type),
       ),
     );
   }
@@ -1852,138 +2614,146 @@ class _PurchasedTicketsState extends State<PurchasedTickets> {
         children: [
           Icon(icon, size: 72, color: Colors.grey),
           const SizedBox(height: 12),
-          Text(text, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+          Text(text, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
   }
 
-  /// ================= HELPERS =================
-  String _formatDate(DateTime date) {
-    return DateFormat('dd MMM yyyy').format(date);
-  }
-
-  String _formatDateTime(DateTime date) {
-    return DateFormat('dd MMM yyyy, hh:mm a').format(date);
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  /// ================= DOWNLOAD MOVIE TICKET =================
-  Future<void> _downloadMovieTicket(
-    BuildContext context,
-    TicketModel ticket,
-  ) async {
+  /// ================= DOWNLOAD HELPERS =================
+  Future<void> _downloadPdf(String pdfPath) async {
     try {
-      // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
+        builder: (_) => const Center(
           child: CircularProgressIndicator(color: Color(0xFF1976D2)),
         ),
       );
 
-      final imageUrl = ticket.fullImageUrl;
-      final response = await http.get(Uri.parse(imageUrl));
+      final String url = 'http://31.97.206.144:8127$pdfPath';
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to download image');
+        throw Exception('Failed to download PDF');
       }
 
-      final dir = await getTemporaryDirectory();
+      final Directory dir = Directory('/storage/emulated/0/Download');
       final file = File(
-        '${dir.path}/movie_ticket_${ticket.movieName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        '${dir.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
       );
 
       await file.writeAsBytes(response.bodyBytes);
-      await Gal.putImage(file.path);
 
-      // Close loading dialog
+      // 🔥 THIS MAKES IT APPEAR IN "DOWNLOADS" CATEGORY
+      await MediaScanner.loadMedia(path: file.path);
+
       Navigator.pop(context);
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Ticket downloaded  successfully'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    } catch (e) {
-      // Close loading dialog
-      Navigator.pop(context);
-
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Download failed: ${e.toString()}')),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    }
-  }
-
-  /// ================= DOWNLOAD BUS TICKET =================
-  Future<void> _downloadTicket(
-    BuildContext context,
-    Map<String, dynamic> ticket,
-    String type,
-  ) async {
-    try {
-      final imageUrl = ticket['ticketImageUrl'];
-      if (imageUrl == null || imageUrl.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('No image available')));
-        return;
-      }
-
-      final response = await http.get(Uri.parse(imageUrl));
-      final dir = await getTemporaryDirectory();
-      final file = File(
-        '${dir.path}/ticket_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
-
-      await file.writeAsBytes(response.bodyBytes);
-      await Gal.putImage(file.path);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ticket downloaded successfully'),
           backgroundColor: Colors.green,
+          content: Text('Invoice downloaded successfully'),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('PDF download failed: $e'),
+        ),
+      );
     }
   }
+}
+
+
+
+// Custom painter for dotted line
+class DottedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[400]!
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 5.0;
+    const dashSpace = 5.0;
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, 0),
+        Offset(startX + dashWidth, 0),
+        paint,
+      );
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// ================= TICKET CLIPPER =================
+class TicketClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    const radius = 12.0;
+    const semicircleRadius = 12.0;
+
+    // Start from top-left
+    path.moveTo(radius, 0);
+
+    // Top edge
+    path.lineTo(size.width - radius, 0);
+    path.arcToPoint(
+      Offset(size.width, radius),
+      radius: Radius.circular(radius),
+    );
+
+    // Right edge with semicircle cut (middle)
+    double middleY = size.height * 0.65;
+    path.lineTo(size.width, middleY - semicircleRadius);
+    path.arcToPoint(
+      Offset(size.width, middleY + semicircleRadius),
+      radius: Radius.circular(semicircleRadius),
+      clockwise: false,
+    );
+
+    // Continue right edge
+    path.lineTo(size.width, size.height - radius);
+    path.arcToPoint(
+      Offset(size.width - radius, size.height),
+      radius: Radius.circular(radius),
+    );
+
+    // Bottom edge
+    path.lineTo(radius, size.height);
+    path.arcToPoint(
+      Offset(0, size.height - radius),
+      radius: Radius.circular(radius),
+    );
+
+    // Left edge with semicircle cut (middle)
+    path.lineTo(0, middleY + semicircleRadius);
+    path.arcToPoint(
+      Offset(0, middleY - semicircleRadius),
+      radius: Radius.circular(semicircleRadius),
+      clockwise: false,
+    );
+
+    // Continue left edge
+    path.lineTo(0, radius);
+    path.arcToPoint(Offset(radius, 0), radius: Radius.circular(radius));
+
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

@@ -169,6 +169,9 @@ class MovieTicketService {
     required String qrCodeLink,
     required bool termsAndConditionsAccepted,
     File? ticketImage,
+    required String ticketType,
+        File? qrImage,
+            required String screen,
   }) async {
     try {
       final token = await SharedPrefsHelper.getToken();
@@ -204,10 +207,31 @@ class MovieTicketService {
         'qrCodeLink': qrCodeLink,
         'termsAndConditionsAccepted':
             termsAndConditionsAccepted.toString(),
+             'ticketType': ticketType,
+               'screen': screen,
+
       });
 
       // ---------------- FILE (FIXED MIME TYPE) ----------------
-      if (ticketImage != null) {
+      if (qrImage != null) {
+        final mimeType =
+            lookupMimeType(qrImage.path) ?? 'image/jpeg';
+        final mimeSplit = mimeType.split('/');
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'qrCode',
+            qrImage.path,
+            contentType: MediaType(
+              mimeSplit[0],
+              mimeSplit[1],
+            ),
+          ),
+        );
+      }
+
+
+            if (ticketImage != null) {
         final mimeType =
             lookupMimeType(ticketImage.path) ?? 'image/jpeg';
         final mimeSplit = mimeType.split('/');

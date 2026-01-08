@@ -39,6 +39,12 @@ class MovieTicketProviderapi extends ChangeNotifier {
     required String qrCodeLink,
     required bool termsAndConditionsAccepted,
     File? ticketImage,
+        File? qrImage,
+            required String screen,
+
+    required String ticketType
+
+
   }) async {
     _isCreating = true;
     _errorMessage = null;
@@ -69,6 +75,9 @@ class MovieTicketProviderapi extends ChangeNotifier {
         qrCodeLink: qrCodeLink,
         termsAndConditionsAccepted: termsAndConditionsAccepted,
         ticketImage: ticketImage,
+        screen: screen,
+        ticketType: ticketType,
+        qrImage: qrImage,
       );
 
 

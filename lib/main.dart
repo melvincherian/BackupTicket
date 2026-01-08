@@ -8,10 +8,11 @@ import 'package:backup_ticket/provider/forgot/forgot_password_provider.dart';
 import 'package:backup_ticket/provider/movie/get_movie_ticket_provider.dart';
 import 'package:backup_ticket/provider/movie/movie_category_provider.dart';
 import 'package:backup_ticket/provider/movie/movie_ticket_provider.dart';
-import 'package:backup_ticket/provider/navbar/navbar_provider.dart';
+import 'package:backup_ticket/provider/movie_poster/movie_poster_provider.dart';
 import 'package:backup_ticket/provider/ongoing/ongoing_movie_provider.dart';
 import 'package:backup_ticket/provider/profile/profile_provider.dart';
 import 'package:backup_ticket/provider/purchaseticket/purchase_ticket_provider.dart';
+import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.dart';
 import 'package:backup_ticket/provider/selltickets/sell_bus_ticket_provider.dart';
 import 'package:backup_ticket/provider/selltickets/sell_movie_ticket_provider.dart';
 import 'package:backup_ticket/views/splash/splash_screen.dart';
@@ -33,7 +34,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => BottomNavbarProvider()),
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => OtpProvider()),
         ChangeNotifierProvider(create: (context) => LoginProvider()),
@@ -48,6 +48,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ProfileProvider()),
         ChangeNotifierProvider(create: (context) => PasswordProvider()),
         ChangeNotifierProvider(create: (context) => TicketProvider()),
+            ChangeNotifierProvider(create: (_) => MoviePosterProvider()),
+                        ChangeNotifierProvider(create: (_) => PurchasedTicketProvider()),
+
+
       ],
       child: MaterialApp(
         title: 'Backup Ticket',

@@ -398,10 +398,15 @@
 //   }
 // }
 
+import 'package:backup_ticket/constant/api_constant.dart';
 import 'package:backup_ticket/helper/auth_helper.dart';
+import 'package:backup_ticket/model/movie_poster_model.dart';
 import 'package:backup_ticket/model/ongoing_movie_model.dart';
+import 'package:backup_ticket/provider/movie_poster/movie_poster_provider.dart';
 import 'package:backup_ticket/provider/ongoing/ongoing_movie_provider.dart';
+import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../Home/image_detail_screen.dart';
 import '../Details/detail_screen.dart';
@@ -425,7 +430,7 @@ class _MovieScreenState extends State<MovieScreen> {
     bool isGuest = true;
   bool isLoading = true;
   String? userName;
-  String? userProfileImage;
+String? _userProfileImage;
 
 
 
@@ -456,10 +461,14 @@ static const String ticketImageBaseUrl =
         isGuest = !isLoggedIn || user == null;
         if (!isGuest && user != null) {
           userName = user.fullName;
-          userProfileImage = user.profileImage;
-        } else {
+
+  _userProfileImage = (user?.profileImage != null &&
+          user!.profileImage!.isNotEmpty)
+      ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
+      : null;   
+       } else {
           userName = null;
-          userProfileImage = null;
+          _userProfileImage = null;
         }
         isLoading = false;
       });
@@ -468,7 +477,7 @@ static const String ticketImageBaseUrl =
       setState(() {
         isGuest = true;
         userName = null;
-        userProfileImage = null;
+        _userProfileImage = null;
         isLoading = false;
       });
     }
@@ -518,21 +527,33 @@ static const String ticketImageBaseUrl =
     },
   ];
 
-  @override
-  void initState() {
-       _loadUserProfile();
-    super.initState();
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page!.round();
-      });
-    });
+@override
+void initState() {
+  _loadUserProfile();
+  super.initState();
+  
+  // Initialize with a large starting index for bidirectional infinite scroll
+  _pageController = PageController(
+    viewportFraction: 0.65, // Shows portions on both sides
+    initialPage: 1000, // Start at a high number for infinite scroll in both directions
+  );
+  
+  _pageController.addListener(() {
+    if (_pageController.page != null) {
+      final movies = context.read<MoviePosterProvider>().posters;
+      if (movies.isNotEmpty) {
+        setState(() {
+          _currentPage = _pageController.page!.round() % movies.length;
+        });
+      }
+    }
+  });
 
-    // Fetch ongoing movies when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OngoingMoviesProvider>().fetchOngoingMovies();
-    });
-  }
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    context.read<MoviePosterProvider>().fetchMoviePosters();
+    context.read<OngoingMoviesProvider>().fetchOngoingMovies();
+  });
+}
 
   @override
   void dispose() {
@@ -542,28 +563,41 @@ static const String ticketImageBaseUrl =
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildHeader(),
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSearchBar(),
-                    _buildOngoingSection(),
-                    _buildCategoryList(),
-                    const SizedBox(height: 20),
-                    _buildNearbyHeader(),
-                    _buildNearbyTickets(),
-                  ],
+    return PopScope(
+            canPop: false,
+           onPopInvoked: (didPop) async {
+        if (didPop) return;
+
+        final shouldExit = await showBackConfirmDialog(context);
+        if (shouldExit) {
+          SystemNavigator.pop(); // exits app / screen
+        }
+      },
+      child: Scaffold(
+        appBar: _buildHeader(),
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBar(),
+                      _buildOngoingSection(),
+                                            const SizedBox(height: 20),
+
+                      _buildCategoryList(),
+                      const SizedBox(height: 20),
+                      _buildNearbyHeader(),
+                      _buildNearbyTickets(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -597,15 +631,17 @@ static const String ticketImageBaseUrl =
                   // LEFT: Avatar + Name
                   Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.white,
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey,
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                      ),
+                   CircleAvatar(
+  radius: 40,
+  backgroundColor: Colors.grey[300],
+  backgroundImage:
+      (_userProfileImage != null && _userProfileImage!.isNotEmpty)
+          ? NetworkImage(_userProfileImage!)
+          : null,
+  child: (_userProfileImage == null || _userProfileImage!.isEmpty)
+      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+      : null,
+),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,7 +712,7 @@ static const String ticketImageBaseUrl =
         height: 50,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(15),
           border: Border.all(color: Colors.black87),
         ),
         child: const Row(
@@ -701,144 +737,445 @@ static const String ticketImageBaseUrl =
             "Ongoing Movies",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => SeeAllScreen()),
-              );
-            },
-            child: const Text("See All", style: TextStyle(color: Colors.black)),
-          ),
+          // TextButton(
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(builder: (_) => SeeAllScreen()),
+          //     );
+          //   },
+          //   child: const Text("See All", style: TextStyle(color: Colors.black)),
+          // ),
         ],
       ),
     );
   }
 
   // CATEGORY CAROUSEL - NOW INTEGRATED WITH API
-  Widget _buildCategoryList() {
-    return Consumer<OngoingMoviesProvider>(
-      builder: (context, provider, child) {
-        if (provider.state == MovieState.loading) {
-          return SizedBox(
-            height: 310,
-            child: Center(
-              child: CircularProgressIndicator(color: Color(0xFF1976D2)),
-            ),
-          );
-        }
+  // Widget _buildCategoryList() {
+  //   return Consumer<OngoingMoviesProvider>(
+  //     builder: (context, provider, child) {
+  //       if (provider.state == MovieState.loading) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+  //           ),
+  //         );
+  //       }
 
-        if (provider.state == MovieState.error) {
-          return SizedBox(
-            height: 310,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  SizedBox(height: 12),
-                  Text(
-                    'Failed to load movies',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                  ),
-                  SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      provider.fetchOngoingMovies();
-                    },
-                    child: Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+  //       if (provider.state == MovieState.error) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 Icon(Icons.error_outline, size: 48, color: Colors.red),
+  //                 SizedBox(height: 12),
+  //                 Text(
+  //                   'Failed to load movies',
+  //                   style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+  //                 ),
+  //                 SizedBox(height: 8),
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     provider.fetchOngoingMovies();
+  //                   },
+  //                   child: Text('Retry'),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       }
 
-        // If no movies from API, show static categories
-        final movies = provider.movies.isEmpty ? _categories : provider.movies;
+  //       // If no movies from API, show static categories
+  //       final movies = provider.movies.isEmpty ? _categories : provider.movies;
 
-        if (provider.movies.isEmpty) {
-          // Use static data
-          return SizedBox(
-            height: 310,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final c = _categories[index];
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: index == _currentPage ? 0 : 20,
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (_) => ImageDetailScreen(
-                      //       movieName: c["name"],
-                      //       categoryId: c["id"],
-                      //       assetImagePath: c["image"],
-                      //     ),
-                      //   ),
-                      // );
-                    },
-                    child: _buildStaticCategoryCard(c),
-                  ),
-                );
-              },
-            ),
-          );
-        }
+  //       if (provider.movies.isEmpty) {
+  //         // Use static data
+  //         return SizedBox(
+  //           height: 310,
+  //           child: PageView.builder(
+  //             controller: _pageController,
+  //             itemCount: _categories.length,
+  //             itemBuilder: (context, index) {
+  //               final c = _categories[index];
+  //               return AnimatedContainer(
+  //                 duration: const Duration(milliseconds: 250),
+  //                 margin: EdgeInsets.symmetric(
+  //                   horizontal: 8,
+  //                   vertical: index == _currentPage ? 0 : 20,
+  //                 ),
+  //                 child: GestureDetector(
+  //                   onTap: () {
+  //                     // Navigator.push(
+  //                     //   context,
+  //                     //   MaterialPageRoute(
+  //                     //     builder: (_) => ImageDetailScreen(
+  //                     //       movieName: c["name"],
+  //                     //       categoryId: c["id"],
+  //                     //       assetImagePath: c["image"],
+  //                     //     ),
+  //                     //   ),
+  //                     // );
+  //                   },
+  //                   child: _buildStaticCategoryCard(c),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         );
+  //       }
 
-        // Use API data
-        return SizedBox(
+  //       // Use API data
+  //       return SizedBox(
+  //         height: 310,
+  //         child: PageView.builder(
+  //           controller: _pageController,
+  //           itemCount: provider.movies.length,
+  //           itemBuilder: (context, index) {
+  //             final movie = provider.movies[index];
+  //             return AnimatedContainer(
+  //               duration: const Duration(milliseconds: 250),
+  //               margin: EdgeInsets.symmetric(
+  //                 horizontal: 8,
+  //                 vertical: index == _currentPage ? 0 : 20,
+  //               ),
+  //               child: GestureDetector(
+  //                 onTap: () {
+  //                   // Navigator.push(
+  //                   //   context,
+  //                   //   MaterialPageRoute(
+  //                   //     builder: (_) => DetailScreen(
+  //                   //       movieName: movie.movieName,
+  //                   //       pricePerTicket: movie.pricePerTicket.toDouble(),
+  //                   //     ),
+  //                   //   ),
+  //                   // );
+
+  //                   Navigator.push(
+  //                     context,
+  //                     MaterialPageRoute(
+  //                       builder: (_) => ImageDetailScreen(
+  //                         movieName: movie.movieName,
+  //                         categoryId: movie.id,
+  //                         assetImagePath: movie.ticketImage,
+  //                       ),
+  //                     ),
+  //                   );
+  //                 },
+  //                 child: _buildApiCategoryCard(movie),
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+//   Widget _buildCategoryList() {
+//   return Consumer<MoviePosterProvider>(
+//     builder: (context, provider, child) {
+//       if (provider.state == MoviePosterState.loading) {
+//         return SizedBox(
+//           height: 310,
+//           child: Center(
+//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//           ),
+//         );
+//       }
+
+//       if (provider.state == MoviePosterState.error) {
+//         return SizedBox(
+//           height: 310,
+//           child: Center(
+//             child: Text("Failed to load movies"),
+//           ),
+//         );
+//       }
+
+//       return SizedBox(
+//         height: 310,
+//         child: PageView.builder(
+//           controller: _pageController,
+//           itemCount: provider.posters.length,
+//           itemBuilder: (context, index) {
+//             final movie = provider.posters[index];
+
+//             return AnimatedContainer(
+//               duration: const Duration(milliseconds: 250),
+//               margin: EdgeInsets.symmetric(
+//                 horizontal: 8,
+//                 vertical: index == _currentPage ? 0 : 20,
+//               ),
+//               child: GestureDetector(
+//                 onTap: () {
+//                   Navigator.push(
+//                     context,
+//                     MaterialPageRoute(
+//                       builder: (_) => ImageDetailScreen(
+//                         movieName: movie.movieName,
+//                         categoryId: movie.id,
+//                         assetImagePath:
+//                             "http://31.97.206.144:8127${movie.image}",
+//                       ),
+//                     ),
+//                   );
+//                 },
+//                 child: Column(
+//                   children: [
+//                     Expanded(
+//                       child: ClipRRect(
+//                         borderRadius: BorderRadius.circular(12),
+//                         child: Image.network(
+//                           "http://31.97.206.144:8127${movie.image}",
+//                           fit: BoxFit.cover,
+//                           width: double.infinity,
+//                         ),
+//                       ),
+//                     ),
+//                     const SizedBox(height: 8),
+//                     Text(
+//                       movie.movieName,
+//                       textAlign: TextAlign.center,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.w600,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             );
+//           },
+//         ),
+//       );
+//     },
+//   );
+// }
+
+
+// Widget _buildCategoryList() {
+//   return Consumer<MoviePosterProvider>(
+//     builder: (context, provider, child) {
+//       if (provider.state == MoviePosterState.loading) {
+//         return const SizedBox(
+//           height: 310,
+//           child: Center(
+//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+//           ),
+//         );
+//       }
+
+//       if (provider.state == MoviePosterState.error) {
+//         return const SizedBox(
+//           height: 310,
+//           child: Center(child: Text("Failed to load movies")),
+//         );
+//       }
+
+//       final movies = provider.posters;
+//       final count = movies.length;
+
+//       // 🔹 1 movie → CENTER
+//       if (count == 1) {
+//         return SizedBox(
+//           height: 310,
+//           child: Center(
+//             child: SizedBox(
+//               width: MediaQuery.of(context).size.width * 0.65,
+//               child: _buildPosterCard(movies[0]),
+//             ),
+//           ),
+//         );
+//       }
+
+//       // 🔹 2 movies → SHARE SPACE EQUALLY
+//       if (count == 2) {
+//         return SizedBox(
+//           height: 310,
+//           child: Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 16),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: movies.map((movie) {
+//                 return SizedBox(
+//                   width: (MediaQuery.of(context).size.width - 48) / 2,
+//                   child: _buildPosterCard(movie),
+//                 );
+//               }).toList(),
+//             ),
+//           ),
+//         );
+//       }
+
+//       // 🔹 3 or more → CAROUSEL (same as before)
+//       return SizedBox(
+//         height: 310,
+//         child: PageView.builder(
+//           controller: _pageController,
+//           itemCount: movies.length,
+//           itemBuilder: (context, index) {
+//             return AnimatedContainer(
+//               duration: const Duration(milliseconds: 250),
+//               margin: EdgeInsets.symmetric(
+//                 horizontal: 8,
+//                 vertical: index == _currentPage ? 0 : 20,
+//               ),
+//               child: _buildPosterCard(movies[index]),
+//             );
+//           },
+//         ),
+//       );
+//     },
+//   );
+// }
+
+
+Widget _buildCategoryList() {
+  return Consumer<MoviePosterProvider>(
+    builder: (context, provider, child) {
+      if (provider.state == MoviePosterState.loading) {
+        return const SizedBox(
           height: 310,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: provider.movies.length,
-            itemBuilder: (context, index) {
-              final movie = provider.movies[index];
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: index == _currentPage ? 0 : 20,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (_) => DetailScreen(
-                    //       movieName: movie.movieName,
-                    //       pricePerTicket: movie.pricePerTicket.toDouble(),
-                    //     ),
-                    //   ),
-                    // );
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ImageDetailScreen(
-                          movieName: movie.movieName,
-                          categoryId: movie.id,
-                          assetImagePath: movie.ticketImage,
-                        ),
-                      ),
-                    );
-                  },
-                  child: _buildApiCategoryCard(movie),
-                ),
-              );
-            },
+          child: Center(
+            child: CircularProgressIndicator(color: Color(0xFF1976D2)),
           ),
         );
-      },
-    );
-  }
+      }
+
+      if (provider.state == MoviePosterState.error) {
+        return const SizedBox(
+          height: 310,
+          child: Center(child: Text("Failed to load movies")),
+        );
+      }
+
+      final movies = provider.posters;
+      final count = movies.length;
+
+      // 🔹 1 movie → CENTER
+      if (count == 1) {
+        return SizedBox(
+          height: 310,
+          child: Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.65,
+              child: _buildPosterCard(movies[0]),
+            ),
+          ),
+        );
+      }
+
+      // 🔹 2 movies → SHARE SPACE EQUALLY
+      if (count == 2) {
+        return SizedBox(
+          height: 310,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: movies.map((movie) {
+                return SizedBox(
+                  width: (MediaQuery.of(context).size.width - 48) / 2,
+                  child: _buildPosterCard(movie),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      }
+
+      // 🔹 3 or more → INFINITE CIRCULAR CAROUSEL
+      return SizedBox(
+        height: 310,
+        child: PageView.builder(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentPage = index % movies.length; // Wrap around
+            });
+          },
+          itemBuilder: (context, index) {
+            // Calculate actual movie index (circular)
+            final movieIndex = index % movies.length;
+            final movie = movies[movieIndex];
+            
+            // Check if this is the active page
+            bool isActive = _currentPage == movieIndex;
+            
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: isActive ? 0 : 20,
+              ),
+              child: Transform.scale(
+                scale: isActive ? 1.0 : 0.85,
+                child: Opacity(
+                  opacity: isActive ? 1.0 : 0.6,
+                  child: _buildPosterCard(movie),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildPosterCard(MoviePoster movie) {
+  print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.movieName}");
+    print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.image}");
+
+  print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.id}");
+
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ImageDetailScreen(
+            movieName: movie.movieName,
+            categoryId: movie.id,
+            assetImagePath: getTicketImageUrl(movie.image),
+          ),
+        ),
+      );
+    },
+    child: Column(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              "http://31.97.206.144:8127${movie.image}",
+              fit: BoxFit.fill,
+              width: double.infinity,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          movie.movieName,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
 
   Widget _buildStaticCategoryCard(Map<String, dynamic> c) {
     return Column(
@@ -943,11 +1280,11 @@ static const String ticketImageBaseUrl =
       child: Row(
         children: const [
           Text(
-            "Nearby Resale Tickets",
+            "Resale Tickets",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          Spacer(),
-          Icon(Icons.arrow_forward_ios, size: 15),
+          // Spacer(),
+          // Icon(Icons.arrow_forward_ios, size: 15),
         ],
       ),
     );
@@ -957,6 +1294,7 @@ static const String ticketImageBaseUrl =
   Widget _buildNearbyTickets() {
     return Consumer<OngoingMoviesProvider>(
       builder: (context, provider, child) {
+        print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk${provider.movies}");
         if (provider.state == MovieState.loading) {
           return Container(
             padding: const EdgeInsets.all(16),
@@ -985,18 +1323,24 @@ static const String ticketImageBaseUrl =
         }
 
         // If no movies from API, show static tickets
-        if (provider.movies.isEmpty) {
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: _tickets.length,
-            itemBuilder: (context, index) {
-              final t = _tickets[index];
-              return _buildStaticTicketCard(t);
-            },
-          );
-        }
+if (provider.movies.isEmpty) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(Icons.movie_outlined, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          const Text(
+            'No resale tickets available',
+            style: TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
         // Use API data
         return ListView.builder(
@@ -1177,9 +1521,9 @@ static const String ticketImageBaseUrl =
         context,
         MaterialPageRoute(
           builder: (_) => ImageDetailScreen(
-            movieName: movie.movieName,
-            categoryId: movie.id,
-            assetImagePath: getTicketImageUrl(movie.ticketImage),
+            movieName: movie.movieId.movieName,
+            categoryId: movie.movieId.id,
+            assetImagePath: getTicketImageUrl(movie.movieId.image),
           ),
         ),
       );
@@ -1197,7 +1541,7 @@ static const String ticketImageBaseUrl =
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: Image.network(
-              getTicketImageUrl(movie.ticketImage),
+              getTicketImageUrl(movie.movieId.image),
               width: 60,
               height: 80,
               fit: BoxFit.cover,
@@ -1217,7 +1561,7 @@ static const String ticketImageBaseUrl =
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  movie.movieName,
+                  movie.movieId.movieName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1239,7 +1583,7 @@ static const String ticketImageBaseUrl =
             ),
           ),
           Text(
-            "₹${movie.totalPrice}",
+            "₹${movie.pricePerTicket}",
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,

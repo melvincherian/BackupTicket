@@ -554,8 +554,10 @@
 
 
 
+import 'package:backup_ticket/constant/api_constant.dart';
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/helper/static_helper.dart';
+import 'package:backup_ticket/views/Wallet/wallet_screen.dart';
 import 'package:backup_ticket/views/auth/login_screen.dart';
 import 'package:backup_ticket/views/deleteaccount/delete_account.dart';
 import 'package:backup_ticket/views/notifications/notification_screen.dart';
@@ -564,7 +566,9 @@ import 'package:backup_ticket/views/privacy/help_screen.dart';
 import 'package:backup_ticket/views/profile/my_profile.dart';
 import 'package:backup_ticket/views/purchasedtickets/purchased_tickets.dart';
 import 'package:backup_ticket/views/referearn/refer_earn_screen.dart';
+import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -599,7 +603,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         isGuest = !isLoggedIn || user == null;
         if (!isGuest && user != null) {
           userName = user.fullName;
-          userProfileImage = user.profileImage;
+userProfileImage = user.profileImage != null
+    ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
+    : null;
         } else {
           userName = null;
           userProfileImage = null;
@@ -756,255 +762,266 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/profilerectangle.png'),
-            fit: BoxFit.cover,
+      body: PopScope(
+                    canPop: false,
+           onPopInvoked: (didPop) async {
+        if (didPop) return;
+
+        final shouldExit = await showBackConfirmDialog(context);
+        if (shouldExit) {
+SystemNavigator.pop();        }
+      },
+        child: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/profilerectangle.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-
-                // Profile section
-                Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyProfile(),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+        
+                  // Profile section
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyProfile(),
+                            ),
+                          );
+                          _loadUserProfile();
+                        },
+                        child: _buildProfileImage(userProfileImage),
+                      ),
+                      const SizedBox(height: 12),
+        
+                      if (isLoading)
+                        const CircularProgressIndicator(color: Colors.white)
+                      else
+                        Text(
+                          userName ?? "Guest",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
-                        );
-                        _loadUserProfile();
-                      },
-                      child: _buildProfileImage(userProfileImage),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (isLoading)
-                      const CircularProgressIndicator(color: Colors.white)
-                    else
-                      Text(
-                        userName ?? "Guest",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        ),
+                    ],
+                  ),
+        
+                  const SizedBox(height: 30),
+        
+                  // Profile card
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height - 280,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                          bottomLeft: Radius.circular(25),
+                          bottomRight: Radius.circular(25),
                         ),
                       ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // Profile card
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height - 280,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        topRight: Radius.circular(24),
-                        bottomLeft: Radius.circular(25),
-                        bottomRight: Radius.circular(25),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Profile',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          _buildMenuItem(
-                            icon: Icons.person_outline,
-                            iconColor: const Color(0xFF4A90E2),
-                            title: 'My Profile',
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MyProfile(),
-                                ),
-                              );
-                              _loadUserProfile();
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.confirmation_number_outlined,
-                            iconColor: const Color(0xFF8B5CF6),
-                            title: 'My Posted Tickets',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PostedTickets(),
-                                ),
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.receipt_outlined,
-                            iconColor: const Color(0xFF06B6D4),
-                            title: 'My Purchased Tickets',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PurchasedTickets(),
-                                ),
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.notification_add,
-                            iconColor: const Color.fromARGB(255, 6, 212, 51),
-                            title: 'Notifications',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationScreen(),
-                                ),
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          const Row(
-                            children: [
-                              Text(
-                                'Support & Settings',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Profile',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          _buildMenuItem(
-                            icon: Icons.privacy_tip_outlined,
-                            iconColor: const Color(0xFFF59E0B),
-                            title: 'Privacy Policy',
-                            onTap: () {
-                              _launchURL(
-                                'https://backupticket-f3cc6.web.app/privacy-policy',
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.info_outline,
-                            iconColor: const Color(0xFF06B6D4),
-                            title: 'About Us',
-                            onTap: () {
-                              _launchURL(
-                                'https://backupticket-f3cc6.web.app/about',
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.delete,
-                            iconColor: const Color(0xFFF59E0B),
-                            title: 'Delete Account',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => DeleteAccountScreen(),
+                            ),
+        
+                            const SizedBox(height: 24),
+        
+                            _buildMenuItem(
+                              icon: Icons.person_outline,
+                              iconColor: const Color(0xFF4A90E2),
+                              title: 'My Profile',
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MyProfile(),
+                                  ),
+                                );
+                                _loadUserProfile();
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.confirmation_number_outlined,
+                              iconColor: const Color(0xFF8B5CF6),
+                              title: 'My Posted Tickets',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PostedTickets(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.receipt_outlined,
+                              iconColor: const Color(0xFF06B6D4),
+                              title: 'My Purchased Tickets',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PurchasedTickets(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.notification_add,
+                              iconColor: const Color.fromARGB(255, 6, 212, 51),
+                              title: 'Notifications',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NotificationScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+                            const SizedBox(height: 24),
+        
+                            const Row(
+                              children: [
+                                Text(
+                                  'Support & Settings',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.card_giftcard,
-                            iconColor: const Color(0xFFF59E0B),
-                            title: 'Refer & Earn',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ReferEarnScreen(),
-                                ),
-                              );
-                            },
-                          ),
-
-                          _buildMenuItem(
-                            icon: Icons.help_outline,
-                            iconColor: const Color(0xFF4A90E2),
-                            title: 'Help',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => HelpScreen(),
-                                ),
-                              );
-                            },
-                          ),
-
-                          isGuest
-                              ? _buildMenuItem(
-                                  icon: Icons.login,
-                                  iconColor: const Color(0xFF4A90E2),
-                                  title: 'Login',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const LoginScreen(),
-                                      ),
-                                    );
-                                  },
-                                  showDivider: false,
-                                )
-                              : _buildMenuItem(
-                                  icon: Icons.logout_outlined,
-                                  iconColor: const Color(0xFF8B5CF6),
-                                  title: 'Logout',
-                                  onTap: () {
-                                    _logout(context);
-                                  },
-                                  showDivider: false,
-                                ),
-                        ],
+                              ],
+                            ),
+        
+                            const SizedBox(height: 16),
+        
+                            _buildMenuItem(
+                              icon: Icons.privacy_tip_outlined,
+                              iconColor: const Color(0xFFF59E0B),
+                              title: 'Privacy Policy',
+                              onTap: () {
+                                _launchURL(
+                                  'https://backupticket-f3cc6.web.app/privacy-policy',
+                                );
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.info_outline,
+                              iconColor: const Color(0xFF06B6D4),
+                              title: 'About Us',
+                              onTap: () {
+                                _launchURL(
+                                  'https://backupticket-f3cc6.web.app/about',
+                                );
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.delete,
+                              iconColor: const Color(0xFFF59E0B),
+                              title: 'Delete Account',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DeleteAccountScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+                            _buildMenuItem(
+                              icon: Icons.card_giftcard,
+                              iconColor: const Color(0xFFF59E0B),
+                              title: 'Refer & Earn',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ReferEarnScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+        
+                            _buildMenuItem(
+                              icon: Icons.help_outline,
+                              iconColor: const Color(0xFF4A90E2),
+                              title: 'Help & FAQ',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => HelpScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+        
+                            isGuest
+                                ? _buildMenuItem(
+                                    icon: Icons.login,
+                                    iconColor: const Color(0xFF4A90E2),
+                                    title: 'Login',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                    showDivider: false,
+                                  )
+                                : _buildMenuItem(
+                                    icon: Icons.logout_outlined,
+                                    iconColor: const Color(0xFF8B5CF6),
+                                    title: 'Logout',
+                                    onTap: () {
+                                      _logout(context);
+                                    },
+                                    showDivider: false,
+                                  ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

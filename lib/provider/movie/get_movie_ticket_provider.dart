@@ -133,45 +133,46 @@ class GetMovieTicketProvider extends ChangeNotifier {
   }
 
   // Fetch all movie tickets with userId
-  Future<void> fetchAllMovieTickets() async {
-    _isLoadingAll = true;
-    _allTicketsError = null;
-    notifyListeners();
+Future<void> fetchAllMovieTickets(
+  String movieId,
+  DateTime showDate,
+) async {
+  _isLoadingAll = true;
+  _allTicketsError = null;
+  notifyListeners();
 
-    try {
-      // Get userId from SharedPreferences
-      final user = await SharedPrefsHelper.getUser();
-      
-      if (user == null || user.id.isEmpty) {
-        throw Exception('User not found. Please login again.');
-      }
-
-      _allTickets = await _service.getAllMovieTickets(user.id);
-      _isLoadingAll = false;
-      notifyListeners();
-    } catch (e) {
-      _allTicketsError = e.toString();
-      _isLoadingAll = false;
-      notifyListeners();
-    }
+  try {
+    _allTickets = await _service.getAllMovieTickets(movieId, showDate);
+  } catch (e) {
+    _allTicketsError = e.toString();
+    _allTickets = [];
   }
+
+  _isLoadingAll = false;
+  notifyListeners();
+}
+
 
   // Alternative: Fetch all movie tickets with explicit userId parameter
-  Future<void> fetchAllMovieTicketsWithUserId(String userId) async {
-    _isLoadingAll = true;
-    _allTicketsError = null;
-    notifyListeners();
+Future<void> fetchAllMovieTicketsWithUserId(
+  String movieId,
+  DateTime showDate,
+) async {
+  _isLoadingAll = true;
+  _allTicketsError = null;
+  notifyListeners();
 
-    try {
-      _allTickets = await _service.getAllMovieTickets(userId);
-      _isLoadingAll = false;
-      notifyListeners();
-    } catch (e) {
-      _allTicketsError = e.toString();
-      _isLoadingAll = false;
-      notifyListeners();
-    }
+  try {
+    _allTickets = await _service.getAllMovieTickets(movieId, showDate);
+  } catch (e) {
+    _allTicketsError = e.toString();
+    _allTickets = [];
   }
+
+  _isLoadingAll = false;
+  notifyListeners();
+}
+
 
   // Clear single ticket
   void clearSingleTicket() {

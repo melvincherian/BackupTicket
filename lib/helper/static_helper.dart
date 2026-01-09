@@ -34,7 +34,7 @@ class UserPreferences {
 
   static Future<String?> getMobileNumber() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyMobileNumber);
+    return prefs.getString(_keyMobileNumber);  
   }
 
   static Future<String?> getEmail() async {

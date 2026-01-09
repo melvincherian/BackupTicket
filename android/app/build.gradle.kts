@@ -9,7 +9,7 @@ plugins {
 android {
     namespace = "com.example.backup_ticket"
     compileSdk = 35
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

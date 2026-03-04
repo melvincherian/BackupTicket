@@ -1,7 +1,6 @@
+import 'package:backup_ticket/constant/api_constant.dart';
 import 'package:backup_ticket/helper/auth_helper.dart';
-import 'package:backup_ticket/helper/static_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
-import 'package:backup_ticket/views/Home/train_screen.dart';
 import 'package:backup_ticket/views/Sell/sell_bus_ticket.dart';
 import 'package:backup_ticket/views/Sell/sell_movie_ticket.dart';
 import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
@@ -23,7 +22,6 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  String _userName = "Guest";
 
   bool isGuest = true;
   bool isLoading = true;
@@ -80,7 +78,10 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
         isGuest = !isLoggedIn || user == null;
         if (!isGuest && user != null) {
           userName = user.fullName;
-          userProfileImage = user.profileImage;
+          userProfileImage =
+              (user.profileImage != null && user.profileImage!.isNotEmpty)
+              ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
+              : null;
         } else {
           userName = null;
           userProfileImage = null;
@@ -141,24 +142,20 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
                               radius: 22,
                               backgroundColor: Colors.white,
                               child: CircleAvatar(
-                                radius: 20,
-                                backgroundImage:
-                                    profileProvider.profileImageUrl != null &&
-                                        profileProvider
-                                            .profileImageUrl!
-                                            .isNotEmpty
-                                    ? NetworkImage(
-                                        profileProvider.profileImageUrl!,
-                                      )
-                                    : null,
+                                radius: 40,
                                 backgroundColor: Colors.grey[300],
+                                backgroundImage:
+                                    (userProfileImage != null &&
+                                        userProfileImage!.isNotEmpty)
+                                    ? NetworkImage(userProfileImage!)
+                                    : null,
                                 child:
-                                    profileProvider.profileImageUrl == null ||
-                                        profileProvider.profileImageUrl!.isEmpty
+                                    (userProfileImage == null ||
+                                        userProfileImage!.isEmpty)
                                     ? const Icon(
                                         Icons.person,
+                                        size: 40,
                                         color: Colors.grey,
-                                        size: 24,
                                       )
                                     : null,
                               ),
@@ -231,14 +228,15 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
         ),
       ),
       body: PopScope(
-                    canPop: false,
-           onPopInvoked: (didPop) async {
-        if (didPop) return;
+        canPop: false,
+        onPopInvoked: (didPop) async {
+          if (didPop) return;
 
-        final shouldExit = await showBackConfirmDialog(context);
-        if (shouldExit) {
-SystemNavigator.pop();        }
-      },
+          final shouldExit = await showBackConfirmDialog(context);
+          if (shouldExit) {
+            SystemNavigator.pop();
+          }
+        },
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -256,7 +254,7 @@ SystemNavigator.pop();        }
               children: [
                 // Custom AppBar
                 // _buildAppBar(context),
-        
+
                 // Main Content
                 Expanded(
                   child: FadeTransition(
@@ -287,74 +285,6 @@ SystemNavigator.pop();        }
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: const [
-                  Icon(Icons.location_on, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    "Hyderabad, Telangana",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                "India",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationScreen(),
-                ),
-              );
-            },
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              child: const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -405,24 +335,24 @@ SystemNavigator.pop();        }
             );
           },
         ),
-        // const SizedBox(height: 20),
-        // _AnimatedTicketCard(
-        //   delay: 150,
-        //   gradient: const LinearGradient(
-        //     colors: [Color(0xFF0277BD), Color(0xFF01579B)],
-        //     begin: Alignment.topLeft,
-        //     end: Alignment.bottomRight,
-        //   ),
-        //   icon: Icons.directions_bus,
-        //   title: 'Bus Tickets',
-        //   subtitle: 'Sell your bus travel tickets',
-        //   onTap: () {
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(builder: (context) => SellBusTicket()),
-        //     );
-        //   },
-        // ),
+        const SizedBox(height: 20),
+        _AnimatedTicketCard(
+          delay: 150,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0277BD), Color(0xFF01579B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          icon: Icons.directions_bus,
+          title: 'Bus Tickets',
+          subtitle: 'Sell your bus travel tickets',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SellBusTicket()),
+            );
+          },
+        ),
 
         // SizedBox(height: 20),
         // _AnimatedTicketCard(

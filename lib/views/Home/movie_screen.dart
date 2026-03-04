@@ -398,6 +398,9 @@
 //   }
 // }
 
+
+
+
 import 'package:backup_ticket/constant/api_constant.dart';
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/model/movie_poster_model.dart';
@@ -427,28 +430,21 @@ class _MovieScreenState extends State<MovieScreen> {
 
   final String _userName = "Guest";
 
-    bool isGuest = true;
+  bool isGuest = true;
   bool isLoading = true;
   String? userName;
-String? _userProfileImage;
+  String? _userProfileImage;
 
+  static const String ticketImageBaseUrl = "http://31.97.206.144:8127";
 
-
-static const String ticketImageBaseUrl =
-    "http://31.97.206.144:8127";
-
-
-
-    String getTicketImageUrl(String imagePath) {
-  if (imagePath.startsWith('http')) {
-    return imagePath;
+  String getTicketImageUrl(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    return "$ticketImageBaseUrl$imagePath";
   }
-  return "$ticketImageBaseUrl$imagePath";
-}
 
-
-
-    Future<void> _loadUserProfile() async {
+  Future<void> _loadUserProfile() async {
     setState(() {
       isLoading = true;
     });
@@ -462,11 +458,11 @@ static const String ticketImageBaseUrl =
         if (!isGuest && user != null) {
           userName = user.fullName;
 
-  _userProfileImage = (user?.profileImage != null &&
-          user!.profileImage!.isNotEmpty)
-      ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
-      : null;   
-       } else {
+          _userProfileImage =
+              (user?.profileImage != null && user!.profileImage!.isNotEmpty)
+              ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
+              : null;
+        } else {
           userName = null;
           _userProfileImage = null;
         }
@@ -482,7 +478,6 @@ static const String ticketImageBaseUrl =
       });
     }
   }
-
 
   final List<Map<String, dynamic>> _categories = [
     {
@@ -527,33 +522,34 @@ static const String ticketImageBaseUrl =
     },
   ];
 
-@override
-void initState() {
-  _loadUserProfile();
-  super.initState();
-  
-  // Initialize with a large starting index for bidirectional infinite scroll
-  _pageController = PageController(
-    viewportFraction: 0.65, // Shows portions on both sides
-    initialPage: 1000, // Start at a high number for infinite scroll in both directions
-  );
-  
-  _pageController.addListener(() {
-    if (_pageController.page != null) {
-      final movies = context.read<MoviePosterProvider>().posters;
-      if (movies.isNotEmpty) {
-        setState(() {
-          _currentPage = _pageController.page!.round() % movies.length;
-        });
-      }
-    }
-  });
+  @override
+  void initState() {
+    _loadUserProfile();
+    super.initState();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    context.read<MoviePosterProvider>().fetchMoviePosters();
-    context.read<OngoingMoviesProvider>().fetchOngoingMovies();
-  });
-}
+    // Initialize with a large starting index for bidirectional infinite scroll
+    _pageController = PageController(
+      viewportFraction: 0.65, // Shows portions on both sides
+      initialPage:
+          1000, // Start at a high number for infinite scroll in both directions
+    );
+
+    _pageController.addListener(() {
+      if (_pageController.page != null) {
+        final movies = context.read<MoviePosterProvider>().posters;
+        if (movies.isNotEmpty) {
+          setState(() {
+            _currentPage = _pageController.page!.round() % movies.length;
+          });
+        }
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MoviePosterProvider>().fetchMoviePosters();
+      context.read<OngoingMoviesProvider>().fetchOngoingMovies();
+    });
+  }
 
   @override
   void dispose() {
@@ -564,8 +560,8 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-            canPop: false,
-           onPopInvoked: (didPop) async {
+      canPop: false,
+      onPopInvoked: (didPop) async {
         if (didPop) return;
 
         final shouldExit = await showBackConfirmDialog(context);
@@ -586,7 +582,7 @@ void initState() {
                     children: [
                       _buildSearchBar(),
                       _buildOngoingSection(),
-                                            const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       _buildCategoryList(),
                       const SizedBox(height: 20),
@@ -631,17 +627,24 @@ void initState() {
                   // LEFT: Avatar + Name
                   Row(
                     children: [
-                   CircleAvatar(
-  radius: 40,
-  backgroundColor: Colors.grey[300],
-  backgroundImage:
-      (_userProfileImage != null && _userProfileImage!.isNotEmpty)
-          ? NetworkImage(_userProfileImage!)
-          : null,
-  child: (_userProfileImage == null || _userProfileImage!.isEmpty)
-      ? const Icon(Icons.person, size: 40, color: Colors.grey)
-      : null,
-),
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage:
+                            (_userProfileImage != null &&
+                                _userProfileImage!.isNotEmpty)
+                            ? NetworkImage(_userProfileImage!)
+                            : null,
+                        child:
+                            (_userProfileImage == null ||
+                                _userProfileImage!.isEmpty)
+                            ? const Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.grey,
+                              )
+                            : null,
+                      ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -876,306 +879,303 @@ void initState() {
   //   );
   // }
 
+  //   Widget _buildCategoryList() {
+  //   return Consumer<MoviePosterProvider>(
+  //     builder: (context, provider, child) {
+  //       if (provider.state == MoviePosterState.loading) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+  //           ),
+  //         );
+  //       }
 
-//   Widget _buildCategoryList() {
-//   return Consumer<MoviePosterProvider>(
-//     builder: (context, provider, child) {
-//       if (provider.state == MoviePosterState.loading) {
-//         return SizedBox(
-//           height: 310,
-//           child: Center(
-//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
-//           ),
-//         );
-//       }
+  //       if (provider.state == MoviePosterState.error) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: Text("Failed to load movies"),
+  //           ),
+  //         );
+  //       }
 
-//       if (provider.state == MoviePosterState.error) {
-//         return SizedBox(
-//           height: 310,
-//           child: Center(
-//             child: Text("Failed to load movies"),
-//           ),
-//         );
-//       }
+  //       return SizedBox(
+  //         height: 310,
+  //         child: PageView.builder(
+  //           controller: _pageController,
+  //           itemCount: provider.posters.length,
+  //           itemBuilder: (context, index) {
+  //             final movie = provider.posters[index];
 
-//       return SizedBox(
-//         height: 310,
-//         child: PageView.builder(
-//           controller: _pageController,
-//           itemCount: provider.posters.length,
-//           itemBuilder: (context, index) {
-//             final movie = provider.posters[index];
+  //             return AnimatedContainer(
+  //               duration: const Duration(milliseconds: 250),
+  //               margin: EdgeInsets.symmetric(
+  //                 horizontal: 8,
+  //                 vertical: index == _currentPage ? 0 : 20,
+  //               ),
+  //               child: GestureDetector(
+  //                 onTap: () {
+  //                   Navigator.push(
+  //                     context,
+  //                     MaterialPageRoute(
+  //                       builder: (_) => ImageDetailScreen(
+  //                         movieName: movie.movieName,
+  //                         categoryId: movie.id,
+  //                         assetImagePath:
+  //                             "http://31.97.206.144:8127${movie.image}",
+  //                       ),
+  //                     ),
+  //                   );
+  //                 },
+  //                 child: Column(
+  //                   children: [
+  //                     Expanded(
+  //                       child: ClipRRect(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                         child: Image.network(
+  //                           "http://31.97.206.144:8127${movie.image}",
+  //                           fit: BoxFit.cover,
+  //                           width: double.infinity,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 8),
+  //                     Text(
+  //                       movie.movieName,
+  //                       textAlign: TextAlign.center,
+  //                       style: const TextStyle(
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
-//             return AnimatedContainer(
-//               duration: const Duration(milliseconds: 250),
-//               margin: EdgeInsets.symmetric(
-//                 horizontal: 8,
-//                 vertical: index == _currentPage ? 0 : 20,
-//               ),
-//               child: GestureDetector(
-//                 onTap: () {
-//                   Navigator.push(
-//                     context,
-//                     MaterialPageRoute(
-//                       builder: (_) => ImageDetailScreen(
-//                         movieName: movie.movieName,
-//                         categoryId: movie.id,
-//                         assetImagePath:
-//                             "http://31.97.206.144:8127${movie.image}",
-//                       ),
-//                     ),
-//                   );
-//                 },
-//                 child: Column(
-//                   children: [
-//                     Expanded(
-//                       child: ClipRRect(
-//                         borderRadius: BorderRadius.circular(12),
-//                         child: Image.network(
-//                           "http://31.97.206.144:8127${movie.image}",
-//                           fit: BoxFit.cover,
-//                           width: double.infinity,
-//                         ),
-//                       ),
-//                     ),
-//                     const SizedBox(height: 8),
-//                     Text(
-//                       movie.movieName,
-//                       textAlign: TextAlign.center,
-//                       style: const TextStyle(
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.w600,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             );
-//           },
-//         ),
-//       );
-//     },
-//   );
-// }
+  // Widget _buildCategoryList() {
+  //   return Consumer<MoviePosterProvider>(
+  //     builder: (context, provider, child) {
+  //       if (provider.state == MoviePosterState.loading) {
+  //         return const SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
+  //           ),
+  //         );
+  //       }
 
+  //       if (provider.state == MoviePosterState.error) {
+  //         return const SizedBox(
+  //           height: 310,
+  //           child: Center(child: Text("Failed to load movies")),
+  //         );
+  //       }
 
-// Widget _buildCategoryList() {
-//   return Consumer<MoviePosterProvider>(
-//     builder: (context, provider, child) {
-//       if (provider.state == MoviePosterState.loading) {
-//         return const SizedBox(
-//           height: 310,
-//           child: Center(
-//             child: CircularProgressIndicator(color: Color(0xFF1976D2)),
-//           ),
-//         );
-//       }
+  //       final movies = provider.posters;
+  //       final count = movies.length;
 
-//       if (provider.state == MoviePosterState.error) {
-//         return const SizedBox(
-//           height: 310,
-//           child: Center(child: Text("Failed to load movies")),
-//         );
-//       }
+  //       // 🔹 1 movie → CENTER
+  //       if (count == 1) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Center(
+  //             child: SizedBox(
+  //               width: MediaQuery.of(context).size.width * 0.65,
+  //               child: _buildPosterCard(movies[0]),
+  //             ),
+  //           ),
+  //         );
+  //       }
 
-//       final movies = provider.posters;
-//       final count = movies.length;
+  //       // 🔹 2 movies → SHARE SPACE EQUALLY
+  //       if (count == 2) {
+  //         return SizedBox(
+  //           height: 310,
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16),
+  //             child: Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //               children: movies.map((movie) {
+  //                 return SizedBox(
+  //                   width: (MediaQuery.of(context).size.width - 48) / 2,
+  //                   child: _buildPosterCard(movie),
+  //                 );
+  //               }).toList(),
+  //             ),
+  //           ),
+  //         );
+  //       }
 
-//       // 🔹 1 movie → CENTER
-//       if (count == 1) {
-//         return SizedBox(
-//           height: 310,
-//           child: Center(
-//             child: SizedBox(
-//               width: MediaQuery.of(context).size.width * 0.65,
-//               child: _buildPosterCard(movies[0]),
-//             ),
-//           ),
-//         );
-//       }
+  //       // 🔹 3 or more → CAROUSEL (same as before)
+  //       return SizedBox(
+  //         height: 310,
+  //         child: PageView.builder(
+  //           controller: _pageController,
+  //           itemCount: movies.length,
+  //           itemBuilder: (context, index) {
+  //             return AnimatedContainer(
+  //               duration: const Duration(milliseconds: 250),
+  //               margin: EdgeInsets.symmetric(
+  //                 horizontal: 8,
+  //                 vertical: index == _currentPage ? 0 : 20,
+  //               ),
+  //               child: _buildPosterCard(movies[index]),
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
-//       // 🔹 2 movies → SHARE SPACE EQUALLY
-//       if (count == 2) {
-//         return SizedBox(
-//           height: 310,
-//           child: Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 16),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: movies.map((movie) {
-//                 return SizedBox(
-//                   width: (MediaQuery.of(context).size.width - 48) / 2,
-//                   child: _buildPosterCard(movie),
-//                 );
-//               }).toList(),
-//             ),
-//           ),
-//         );
-//       }
-
-//       // 🔹 3 or more → CAROUSEL (same as before)
-//       return SizedBox(
-//         height: 310,
-//         child: PageView.builder(
-//           controller: _pageController,
-//           itemCount: movies.length,
-//           itemBuilder: (context, index) {
-//             return AnimatedContainer(
-//               duration: const Duration(milliseconds: 250),
-//               margin: EdgeInsets.symmetric(
-//                 horizontal: 8,
-//                 vertical: index == _currentPage ? 0 : 20,
-//               ),
-//               child: _buildPosterCard(movies[index]),
-//             );
-//           },
-//         ),
-//       );
-//     },
-//   );
-// }
-
-
-Widget _buildCategoryList() {
-  return Consumer<MoviePosterProvider>(
-    builder: (context, provider, child) {
-      if (provider.state == MoviePosterState.loading) {
-        return const SizedBox(
-          height: 310,
-          child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF1976D2)),
-          ),
-        );
-      }
-
-      if (provider.state == MoviePosterState.error) {
-        return const SizedBox(
-          height: 310,
-          child: Center(child: Text("Failed to load movies")),
-        );
-      }
-
-      final movies = provider.posters;
-      final count = movies.length;
-
-      // 🔹 1 movie → CENTER
-      if (count == 1) {
-        return SizedBox(
-          height: 310,
-          child: Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.65,
-              child: _buildPosterCard(movies[0]),
+  Widget _buildCategoryList() {
+    return Consumer<MoviePosterProvider>(
+      builder: (context, provider, child) {
+        if (provider.state == MoviePosterState.loading) {
+          return const SizedBox(
+            height: 310,
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xFF1976D2)),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      // 🔹 2 movies → SHARE SPACE EQUALLY
-      if (count == 2) {
-        return SizedBox(
-          height: 310,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: movies.map((movie) {
-                return SizedBox(
-                  width: (MediaQuery.of(context).size.width - 48) / 2,
-                  child: _buildPosterCard(movie),
-                );
-              }).toList(),
-            ),
-          ),
-        );
-      }
+        if (provider.state == MoviePosterState.error) {
+          return const SizedBox(
+            height: 310,
+            child: Center(child: Text("Failed to load movies")),
+          );
+        }
 
-      // 🔹 3 or more → INFINITE CIRCULAR CAROUSEL
-      return SizedBox(
-        height: 310,
-        child: PageView.builder(
-          controller: _pageController,
-          onPageChanged: (index) {
-            setState(() {
-              _currentPage = index % movies.length; // Wrap around
-            });
-          },
-          itemBuilder: (context, index) {
-            // Calculate actual movie index (circular)
-            final movieIndex = index % movies.length;
-            final movie = movies[movieIndex];
-            
-            // Check if this is the active page
-            bool isActive = _currentPage == movieIndex;
-            
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: isActive ? 0 : 20,
+        final movies = provider.posters;
+        final count = movies.length;
+
+        // 🔹 1 movie → CENTER
+        if (count == 1) {
+          return SizedBox(
+            height: 310,
+            child: Center(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.65,
+                child: _buildPosterCard(movies[0]),
               ),
-              child: Transform.scale(
-                scale: isActive ? 1.0 : 0.85,
-                child: Opacity(
-                  opacity: isActive ? 1.0 : 0.6,
-                  child: _buildPosterCard(movie),
+            ),
+          );
+        }
+
+        // 🔹 2 movies → SHARE SPACE EQUALLY
+        if (count == 2) {
+          return SizedBox(
+            height: 310,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: movies.map((movie) {
+                  return SizedBox(
+                    width: (MediaQuery.of(context).size.width - 48) / 2,
+                    child: _buildPosterCard(movie),
+                  );
+                }).toList(),
+              ),
+            ),
+          );
+        }
+
+        // 🔹 3 or more → INFINITE CIRCULAR CAROUSEL
+        return SizedBox(
+          height: 310,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index % movies.length; // Wrap around
+              });
+            },
+            itemBuilder: (context, index) {
+              // Calculate actual movie index (circular)
+              final movieIndex = index % movies.length;
+              final movie = movies[movieIndex];
+
+              // Check if this is the active page
+              bool isActive = _currentPage == movieIndex;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: isActive ? 0 : 20,
                 ),
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
-
-Widget _buildPosterCard(MoviePoster movie) {
-  print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.movieName}");
-    print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.image}");
-
-  print("lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.id}");
-
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ImageDetailScreen(
-            movieName: movie.movieName,
-            categoryId: movie.id,
-            assetImagePath: getTicketImageUrl(movie.image),
+                child: Transform.scale(
+                  scale: isActive ? 1.0 : 0.85,
+                  child: Opacity(
+                    opacity: isActive ? 1.0 : 0.6,
+                    child: _buildPosterCard(movie),
+                  ),
+                ),
+              );
+            },
           ),
-        ),
-      );
-    },
-    child: Column(
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              "http://31.97.206.144:8127${movie.image}",
-              fit: BoxFit.fill,
-              width: double.infinity,
+        );
+      },
+    );
+  }
+
+  Widget _buildPosterCard(MoviePoster movie) {
+    print(
+      "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.movieName}",
+    );
+    print(
+      "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.image}",
+    );
+
+    print(
+      "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll${movie.id}",
+    );
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ImageDetailScreen(
+              movieName: movie.movieName,
+              categoryId: movie.id,
+              assetImagePath: getTicketImageUrl(movie.image),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          movie.movieName,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+        );
+      },
+      child: Column(
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                "http://31.97.206.144:8127${movie.image}",
+                fit: BoxFit.fill,
+                width: double.infinity,
+              ),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-
+          const SizedBox(height: 8),
+          Text(
+            movie.movieName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStaticCategoryCard(Map<String, dynamic> c) {
     return Column(
@@ -1214,7 +1214,7 @@ Widget _buildPosterCard(MoviePoster movie) {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-               getTicketImageUrl(movie.ticketImage),
+              getTicketImageUrl(movie.ticketImage),
               fit: BoxFit.cover,
               width: double.infinity,
               errorBuilder: (context, error, stackTrace) {
@@ -1294,7 +1294,9 @@ Widget _buildPosterCard(MoviePoster movie) {
   Widget _buildNearbyTickets() {
     return Consumer<OngoingMoviesProvider>(
       builder: (context, provider, child) {
-        print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk${provider.movies}");
+        print(
+          "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk${provider.movies}",
+        );
         if (provider.state == MovieState.loading) {
           return Container(
             padding: const EdgeInsets.all(16),
@@ -1323,24 +1325,23 @@ Widget _buildPosterCard(MoviePoster movie) {
         }
 
         // If no movies from API, show static tickets
-if (provider.movies.isEmpty) {
-  return Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Icon(Icons.movie_outlined, size: 48, color: Colors.grey),
-          const SizedBox(height: 8),
-          const Text(
-            'No resale tickets available',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
+        if (provider.movies.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Icon(Icons.movie_outlined, size: 48, color: Colors.grey),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'No resale tickets available',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         // Use API data
         return ListView.builder(
@@ -1512,89 +1513,83 @@ if (provider.movies.isEmpty) {
   //   );
   // }
 
-
-
   Widget _buildApiTicketCard(OngoingMovie movie) {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ImageDetailScreen(
-            movieName: movie.movieId.movieName,
-            categoryId: movie.movieId.id,
-            assetImagePath: getTicketImageUrl(movie.movieId.image),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ImageDetailScreen(
+              movieName: movie.movieId.movieName,
+              categoryId: movie.movieId.id,
+              assetImagePath: getTicketImageUrl(movie.movieId.image),
+            ),
           ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(),
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Image.network(
-              getTicketImageUrl(movie.movieId.image),
-              width: 60,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 60,
-                  height: 80,
-                  color: Colors.grey[300],
-                  child: Icon(Icons.movie, color: Colors.grey[600]),
-                );
-              },
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                getTicketImageUrl(movie.movieId.image),
+                width: 60,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 60,
+                    height: 80,
+                    color: Colors.grey[300],
+                    child: Icon(Icons.movie, color: Colors.grey[600]),
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  movie.movieId.movieName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    movie.movieId.movieName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                Text(
-                  movie.language,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                Text(
-                  "${_formatDate(movie.showDate)}  ${movie.showTime}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  movie.theatrePlace,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
+                  Text(
+                    movie.language,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  Text(
+                    "${_formatDate(movie.showDate)}  ${movie.showTime}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    movie.theatrePlace,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            "₹${movie.pricePerTicket}",
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+            Text(
+              "₹${movie.pricePerTicket}",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   String _formatDate(DateTime date) {
     final months = [

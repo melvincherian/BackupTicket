@@ -58,8 +58,12 @@ class _SellBusTicketState extends State<SellBusTicket> {
   bool _showToSuggestions = false;
   Timer? _debounceTimer;
 
+
+    String? userName;
+
+
   // List to hold multiple passengers
-  List<Passenger> _passengers = [];
+  // List<Passenger> _passengers = [];
   List<Map<String, TextEditingController>> _passengerControllers = [];
 
   // List to hold seat numbers
@@ -68,10 +72,6 @@ class _SellBusTicketState extends State<SellBusTicket> {
   @override
   void initState() {
     super.initState();
-    // // Set default values
-    // _fullNameController.text = '';
-    // _phoneController.text = '';
-    // _emailController.text = '';
     _selectedGender = 'Male';
     _selectedTicketCount = '1';
 
@@ -93,6 +93,11 @@ class _SellBusTicketState extends State<SellBusTicket> {
 
     try {
       final response = await http.get(Uri.parse(url));
+
+
+            print('Response status code for google map ${response.statusCode}');
+            print('Response body code for google map ${response.body}');
+
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -201,20 +206,17 @@ class _SellBusTicketState extends State<SellBusTicket> {
       },
     );
   }
-
   Future<void> _loadUserData() async {
-    final name = await UserPreferences.getName();
-    final phone = await UserPreferences.getMobileNumber();
-    final email = await UserPreferences.getEmail();
+  final user = await SharedPrefsHelper.getUser();
 
-    if (mounted) {
-      setState(() {
-        if (name != null) _fullNameController.text = name;
-        if (phone != null) _phoneController.text = phone;
-        if (email != null) _emailController.text = email;
-      });
-    }
+  if (mounted && user != null) {
+    setState(() {
+      _fullNameController.text = user.firstName ?? '';
+      _phoneController.text = user.phoneNumber ?? '';
+      _emailController.text = user.email ?? '';
+    });
   }
+}
 
   @override
   void dispose() {
@@ -609,18 +611,7 @@ class _SellBusTicketState extends State<SellBusTicket> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
-                  // _buildDropdownField(
-                  //   'Gender',
-                  //   'Male',
-                  //   ['Male', 'Female', 'Other'],
-                  //   _selectedGender,
-                  //   (value) {
-                  //     setState(() {
-                  //       _selectedGender = value;
-                  //     });
-                  //   },
-                  //   required: true,
-                  // ),
+
                   const SizedBox(height: 16),
 
                   // Replace your existing _buildTextField calls for From and To with these:
@@ -758,20 +749,6 @@ class _SellBusTicketState extends State<SellBusTicket> {
                         ),
                     ],
                   ),
-
-                  // _buildTextField(
-                  //   'From',
-                  //   'Enter pickup point',
-                  //   _pickupPointController,
-                  //   required: true,
-                  // ),
-                  // const SizedBox(height: 16),
-                  // _buildTextField(
-                  //   'To',
-                  //   'Enter drop point',
-                  //   _dropPointController,
-                  //   required: true,
-                  // ),
                   const SizedBox(height: 16),
 
                   // To Field with Suggestions
@@ -1376,12 +1353,6 @@ class _SellBusTicketState extends State<SellBusTicket> {
               ],
             ),
             const SizedBox(height: 12),
-            // _buildTextField(
-            //   'Seat Number',
-            //   'e.g. A1',
-            //   controllers['seat']!,
-            //   required: true,
-            // ),
           ],
         ),
       ),

@@ -37,7 +37,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
     DateTime.now().day,
   );
   String _userName = "Guest";
-String? _userProfileImage;
+  String? _userProfileImage;
 
   String? _userId;
   final ScrollController _dateScrollController = ScrollController();
@@ -60,25 +60,19 @@ String? _userProfileImage;
     );
 
     final user = await SharedPrefsHelper.getUser();
-setState(() {
-  _userName = user?.fullName ?? "Guest";
-  _userId = user?.id;
+    setState(() {
+      _userName = user?.fullName ?? "Guest";
+      _userId = user?.id;
 
-  _userProfileImage = (user?.profileImage != null &&
-          user!.profileImage!.isNotEmpty)
-      ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
-      : null;
-});
+      _userProfileImage =
+          (user?.profileImage != null && user!.profileImage!.isNotEmpty)
+          ? '${ApiConstants.baseUrl}/${user.profileImage!.replaceAll('\\', '/')}'
+          : null;
+    });
 
-    print(
-      "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk$_userName",
-    );
+    print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk$_userName");
 
-    print(
-      "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk$_userProfileImage",
-    );
-
-
+    print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk$_userProfileImage");
 
     // Load cart if user is logged in
     if (_userId != null) {
@@ -154,17 +148,24 @@ setState(() {
                   children: [
                     Row(
                       children: [
-      CircleAvatar(
-  radius: 40,
-  backgroundColor: Colors.grey[300],
-  backgroundImage:
-      (_userProfileImage != null && _userProfileImage!.isNotEmpty)
-          ? NetworkImage(_userProfileImage!)
-          : null,
-  child: (_userProfileImage == null || _userProfileImage!.isEmpty)
-      ? const Icon(Icons.person, size: 40, color: Colors.grey)
-      : null,
-),
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage:
+                              (_userProfileImage != null &&
+                                  _userProfileImage!.isNotEmpty)
+                              ? NetworkImage(_userProfileImage!)
+                              : null,
+                          child:
+                              (_userProfileImage == null ||
+                                  _userProfileImage!.isEmpty)
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: Colors.grey,
+                                )
+                              : null,
+                        ),
 
                         const SizedBox(width: 12),
                         Column(
@@ -317,7 +318,7 @@ setState(() {
                   const Icon(Icons.error_outline, size: 60, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading tickets',
+                    'Ticket not available now',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -828,7 +829,7 @@ setState(() {
                         '${ticket.noOfTickets} available',
                         Colors.orange,
                       ),
-                                 _buildInfoChip(
+                      _buildInfoChip(
                         Icons.theaters,
                         '${ticket.screen} ',
                         Colors.orange,
@@ -874,43 +875,42 @@ setState(() {
                   //           ),
                   //         ],
                   // ),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: ticket.selectedSeats.isNotEmpty
+                        ? ticket.selectedSeats.map((seat) {
+                            // Convert "Row C, Seat 2" → "C2"
+                            final parts = seat.split(',');
+                            String formattedSeat = seat;
 
+                            if (parts.length == 2) {
+                              final row = parts[0].replaceAll('Row', '').trim();
+                              final number = parts[1]
+                                  .replaceAll('Seat', '')
+                                  .trim();
+                              formattedSeat = '$row$number';
+                            }
 
-
-Wrap(
-  alignment: WrapAlignment.end,
-  spacing: 6,
-  runSpacing: 4,
-  children: ticket.selectedSeats.isNotEmpty
-      ? ticket.selectedSeats.map((seat) {
-          // Convert "Row C, Seat 2" → "C2"
-          final parts = seat.split(',');
-          String formattedSeat = seat;
-
-          if (parts.length == 2) {
-            final row = parts[0].replaceAll('Row', '').trim();
-            final number = parts[1].replaceAll('Seat', '').trim();
-            formattedSeat = '$row$number';
-          }
-
-          return Text(
-            formattedSeat,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          );
-        }).toList()
-      : const [
-          Text(
-            'Seat: N/A',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-),
+                            return Text(
+                              formattedSeat,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList()
+                        : const [
+                            Text(
+                              'Seat: N/A',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                  ),
 
                   const SizedBox(height: 10),
 
@@ -1526,430 +1526,421 @@ Wrap(
   //   );
   // }
 
-
-
-
   void _showQuantitySelector(MovieTicket ticket) {
-  int selectedQuantity = 1;
-  List<String> selectedSeats = [];
+    int selectedQuantity = 1;
+    List<String> selectedSeats = [];
 
-  final int maxQty = ticket.noOfTickets;
+    final int maxQty = ticket.noOfTickets;
 
-  print("llllllllllllllllllllllllllllllllllllllllll${ticket.screen}");
+    print("llllllllllllllllllllllllllllllllllllllllll${ticket.screen}");
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setModalState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Select Quantity',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${maxQty} ticket${maxQty > 1 ? 's' : ''} available',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 20),
-
-                // Quantity Controls
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: selectedQuantity > 1
-                            ? Colors.blue.shade50
-                            : Colors.grey.shade100,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        onPressed: selectedQuantity > 1
-                            ? () {
-                                setModalState(() {
-                                  selectedQuantity--;
-                                  selectedSeats.clear();
-                                });
-                              }
-                            : null,
-                        icon: const Icon(Icons.remove),
-                        iconSize: 24,
-                        color: selectedQuantity > 1
-                            ? Colors.blue
-                            : Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Container(
-                      width: 80,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.blue.shade300,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.blue.shade50,
-                      ),
-                      child: Text(
-                        selectedQuantity.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: selectedQuantity < maxQty
-                            ? Colors.blue.shade50
-                            : Colors.grey.shade100,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        onPressed: selectedQuantity < maxQty
-                            ? () {
-                                setModalState(() {
-                                  selectedQuantity++;
-                                  selectedSeats.clear();
-                                });
-                              }
-                            : null,
-                        icon: const Icon(Icons.add),
-                        iconSize: 24,
-                        color: selectedQuantity < maxQty
-                            ? Colors.blue
-                            : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                const SizedBox(height: 16),
-
-                // 🎯 Seat Selection Title
-                Text(
-                  'Select Seats',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Wrap(
-                //   spacing: 8,
-                //   runSpacing: 8,
-                //   children: ticket.selectedSeats.map((seat) {
-                //     final isSelected = selectedSeats.contains(seat);
-                //     final isDisabled =
-                //         !isSelected && selectedSeats.length >= selectedQuantity;
-
-                //     return GestureDetector(
-                //       onTap: isDisabled
-                //           ? null
-                //           : () {
-                //               setModalState(() {
-                //                 if (isSelected) {
-                //                   selectedSeats.remove(seat);
-                //                 } else {
-                //                   selectedSeats.add(seat);
-                //                 }
-                //               });
-                //             },
-                //       child: Container(
-                //         padding: const EdgeInsets.symmetric(
-                //           horizontal: 12,
-                //           vertical: 8,
-                //         ),
-                //         decoration: BoxDecoration(
-                //           color: isSelected
-                //               ? Colors.green
-                //               : isDisabled
-                //                   ? Colors.grey.shade300
-                //                   : Colors.blue.shade50,
-                //           borderRadius: BorderRadius.circular(8),
-                //           border: Border.all(
-                //             color: isSelected
-                //                 ? Colors.green
-                //                 : Colors.blue.shade200,
-                //           ),
-                //         ),
-                //         child: Text(
-                //           seat,
-                //           style: TextStyle(
-                //             color: isSelected
-                //                 ? Colors.white
-                //                 : isDisabled
-                //                     ? Colors.grey
-                //                     : Colors.black,
-                //             fontWeight: FontWeight.w600,
-                //           ),
-                //         ),
-                //       ),
-                //     );
-                //   }).toList(),
-                // ),
-
-
-                Wrap(
-  spacing: 8,
-  runSpacing: 8,
-  children: ticket.selectedSeats.map((seat) {
-    final isSelected = selectedSeats.contains(seat);
-    final isDisabled =
-        !isSelected && selectedSeats.length >= selectedQuantity;
-
-    // Convert "Row A, Seat 17" → "A17"
-    String formattedSeat = seat;
-    final parts = seat.split(',');
-    if (parts.length == 2) {
-      final row = parts[0].replaceAll('Row', '').trim();
-      final number = parts[1].replaceAll('Seat', '').trim();
-      formattedSeat = '$row$number';
-    }
-
-    return GestureDetector(
-      onTap: isDisabled
-          ? null
-          : () {
-              setModalState(() {
-                if (isSelected) {
-                  selectedSeats.remove(seat);
-                } else {
-                  selectedSeats.add(seat);
-                }
-              });
-            },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.green
-              : isDisabled
-                  ? Colors.grey.shade300
-                  : Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected
-                ? Colors.green
-                : Colors.blue.shade200,
-          ),
-        ),
-        child: Text(
-          formattedSeat, // ✅ HERE
-          style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : isDisabled
-                    ? Colors.grey
-                    : Colors.black,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-    );
-  }).toList(),
-),
-
-
-                const SizedBox(height: 12),
-
-                // Helper text
-                Text(
-                  'Selected ${selectedSeats.length} / $selectedQuantity seats',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: selectedSeats.length == selectedQuantity
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                ),
-
-                // Price breakdown
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Price per ticket:',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          Text(
-                            '₹${ticket.pricePerTicket}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'Select Quantity',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'No.of Ticket:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          Text(
-                            '$selectedQuantity',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(height: 1),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total Amount:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '₹${ticket.pricePerTicket * selectedQuantity}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${maxQty} ticket${maxQty > 1 ? 's' : ''} available',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
-
-                // Buy Now Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: selectedSeats.length == selectedQuantity
-                        ? () {
-                            // Close the bottom sheet first
-                            Navigator.pop(context);
-                            
-                            // Then navigate to DetailScreen with selected data
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DetailScreen(
-                                  movieName: ticket.movieId.movieName,
-                                  theatrePlace: ticket.theatrePlace,
-                                  showDate: ticket.showDate,
-                                  showTime: ticket.showTime,
-                                  language: ticket.language ?? 'N/A',
-                                  ticketCategory: ticket.ticketCategory,
-                                  selectedSeats: selectedSeats,
-                                  pricePerTicket: ticket.pricePerTicket.toDouble(),
-                                  ticketImageUrl: ticket.movieId.image,
-                                  posterImage: ticket.movieId.image,
-                                  selectedQuantity: selectedQuantity,
-                                  ticketId: ticket.id,
-                                  ticketType:ticket.ticketType,
-                                  screen:ticket.screen
-                                ),
-                              ),
-                            );
-                          }
-                        : null,
-                    label: Text(
-                      selectedSeats.length == selectedQuantity
-                          ? 'Book Now'
-                          : 'Select ${selectedQuantity - selectedSeats.length} more seat(s)',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  // Quantity Controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: selectedQuantity > 1
+                              ? Colors.blue.shade50
+                              : Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: selectedQuantity > 1
+                              ? () {
+                                  setModalState(() {
+                                    selectedQuantity--;
+                                    selectedSeats.clear();
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.remove),
+                          iconSize: 24,
+                          color: selectedQuantity > 1
+                              ? Colors.blue
+                              : Colors.grey,
+                        ),
                       ),
+                      const SizedBox(width: 20),
+                      Container(
+                        width: 80,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blue.shade300,
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.blue.shade50,
+                        ),
+                        child: Text(
+                          selectedQuantity.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: selectedQuantity < maxQty
+                              ? Colors.blue.shade50
+                              : Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: selectedQuantity < maxQty
+                              ? () {
+                                  setModalState(() {
+                                    selectedQuantity++;
+                                    selectedSeats.clear();
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.add),
+                          iconSize: 24,
+                          color: selectedQuantity < maxQty
+                              ? Colors.blue
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  const SizedBox(height: 16),
+
+                  // 🎯 Seat Selection Title
+                  Text(
+                    'Select Seats',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Wrap(
+                  //   spacing: 8,
+                  //   runSpacing: 8,
+                  //   children: ticket.selectedSeats.map((seat) {
+                  //     final isSelected = selectedSeats.contains(seat);
+                  //     final isDisabled =
+                  //         !isSelected && selectedSeats.length >= selectedQuantity;
+
+                  //     return GestureDetector(
+                  //       onTap: isDisabled
+                  //           ? null
+                  //           : () {
+                  //               setModalState(() {
+                  //                 if (isSelected) {
+                  //                   selectedSeats.remove(seat);
+                  //                 } else {
+                  //                   selectedSeats.add(seat);
+                  //                 }
+                  //               });
+                  //             },
+                  //       child: Container(
+                  //         padding: const EdgeInsets.symmetric(
+                  //           horizontal: 12,
+                  //           vertical: 8,
+                  //         ),
+                  //         decoration: BoxDecoration(
+                  //           color: isSelected
+                  //               ? Colors.green
+                  //               : isDisabled
+                  //                   ? Colors.grey.shade300
+                  //                   : Colors.blue.shade50,
+                  //           borderRadius: BorderRadius.circular(8),
+                  //           border: Border.all(
+                  //             color: isSelected
+                  //                 ? Colors.green
+                  //                 : Colors.blue.shade200,
+                  //           ),
+                  //         ),
+                  //         child: Text(
+                  //           seat,
+                  //           style: TextStyle(
+                  //             color: isSelected
+                  //                 ? Colors.white
+                  //                 : isDisabled
+                  //                     ? Colors.grey
+                  //                     : Colors.black,
+                  //             fontWeight: FontWeight.w600,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     );
+                  //   }).toList(),
+                  // ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ticket.selectedSeats.map((seat) {
+                      final isSelected = selectedSeats.contains(seat);
+                      final isDisabled =
+                          !isSelected &&
+                          selectedSeats.length >= selectedQuantity;
+
+                      // Convert "Row A, Seat 17" → "A17"
+                      String formattedSeat = seat;
+                      final parts = seat.split(',');
+                      if (parts.length == 2) {
+                        final row = parts[0].replaceAll('Row', '').trim();
+                        final number = parts[1].replaceAll('Seat', '').trim();
+                        formattedSeat = '$row$number';
+                      }
+
+                      return GestureDetector(
+                        onTap: isDisabled
+                            ? null
+                            : () {
+                                setModalState(() {
+                                  if (isSelected) {
+                                    selectedSeats.remove(seat);
+                                  } else {
+                                    selectedSeats.add(seat);
+                                  }
+                                });
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.green
+                                : isDisabled
+                                ? Colors.grey.shade300
+                                : Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.green
+                                  : Colors.blue.shade200,
+                            ),
+                          ),
+                          child: Text(
+                            formattedSeat, // ✅ HERE
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : isDisabled
+                                  ? Colors.grey
+                                  : Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Helper text
+                  Text(
+                    'Selected ${selectedSeats.length} / $selectedQuantity seats',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: selectedSeats.length == selectedQuantity
+                          ? Colors.green
+                          : Colors.red,
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedSeats.length == selectedQuantity
-                          ? const Color.fromARGB(255, 52, 109, 224)
-                          : Colors.grey,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  ),
+
+                  // Price breakdown
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Price per ticket:',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            Text(
+                              '₹${ticket.pricePerTicket}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'No.of Ticket:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            Text(
+                              '$selectedQuantity',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(height: 1),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Amount:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '₹${ticket.pricePerTicket * selectedQuantity}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Buy Now Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: selectedSeats.length == selectedQuantity
+                          ? () {
+                              // Close the bottom sheet first
+                              Navigator.pop(context);
+
+                              // Then navigate to DetailScreen with selected data
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DetailScreen(
+                                    movieName: ticket.movieId.movieName,
+                                    theatrePlace: ticket.theatrePlace,
+                                    showDate: ticket.showDate,
+                                    showTime: ticket.showTime,
+                                    language: ticket.language ?? 'N/A',
+                                    ticketCategory: ticket.ticketCategory,
+                                    selectedSeats: selectedSeats,
+                                    pricePerTicket: ticket.pricePerTicket
+                                        .toDouble(),
+                                    ticketImageUrl: ticket.movieId.image,
+                                    posterImage: ticket.movieId.image,
+                                    selectedQuantity: selectedQuantity,
+                                    ticketId: ticket.id,
+                                    ticketType: ticket.ticketType,
+                                    screen: ticket.screen,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
+                      label: Text(
+                        selectedSeats.length == selectedQuantity
+                            ? 'Book Now'
+                            : 'Select ${selectedQuantity - selectedSeats.length} more seat(s)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            selectedSeats.length == selectedQuantity
+                            ? const Color.fromARGB(255, 52, 109, 224)
+                            : Colors.grey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-
-
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showLoginRequiredDialog() {
     showDialog(

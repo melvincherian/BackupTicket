@@ -18,6 +18,7 @@ class ApiConstants {
   static const String forgotPassword='$baseUrl/api/auth/forgot-password';
   static const String resetpassword='$baseUrl/api/auth/reset-password';
   static const String purchasemovieticket='$baseUrl/api/auth/purchasedmovietickets/:userId';
+  static const String createbusticket='$baseUrl/api/auth/';
   
   
 }

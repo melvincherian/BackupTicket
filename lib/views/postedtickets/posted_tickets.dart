@@ -1977,7 +1977,8 @@ class _PostedTicketsState extends State<PostedTickets>
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('My Posted Tickets'),
+        title: const Text('My Posted Tickets',style: TextStyle(fontWeight: FontWeight.bold),),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(

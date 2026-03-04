@@ -425,6 +425,7 @@
 
 
 
+import 'package:backup_ticket/views/Home/bus_screen.dart';
 import 'package:backup_ticket/views/Home/movie_screen.dart';
 import 'package:backup_ticket/views/Home/profile_screen.dart';
 import 'package:backup_ticket/views/Home/sell_screen.dart';
@@ -448,6 +449,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
   /// ✅ SCREENS (INDEXES MUST MATCH NAV ITEMS)
   final List<Widget> _screens = const [
     MovieScreen(),   // index 0
+    BusScreen(),
     SellScreen(),    // index 1 (CENTER)
     ProfileScreen(), // index 2
   ];
@@ -495,10 +497,17 @@ class _NavbarScreenState extends State<NavbarScreen> {
                 index: 0,
               ),
 
+                   _buildNavItem(
+                icon: Icons.directions_bus_outlined,
+                selectedIcon: Icons.directions_bus,
+                label: 'Bus',
+                index: 1,
+              ),
+
               /// CENTER (SELL)
               _buildCenterNavItem(
                 icon: Icons.add_rounded,
-                index: 1,
+                index: 2,
               ),
 
               /// RIGHT
@@ -506,7 +515,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
                 icon: Icons.person_outline,
                 selectedIcon: Icons.person,
                 label: 'Profile',
-                index: 2,
+                index: 3,
               ),
             ],
           ),

@@ -1895,7 +1895,7 @@ class BusTicket {
 
 /// ================= API =================
 class TicketApiService {
-  static const baseUrl = 'http://31.97.206.144:8127/api/auth';
+  static const baseUrl = 'http://31.97.228.17:8127/api/auth';
 
   static Future<List<MovieTicket>> fetchPostedTickets(String userId) async {
     final token = await SharedPrefsHelper.getToken();
@@ -1953,7 +1953,7 @@ class _PostedTicketsState extends State<PostedTickets>
   bool _loading = false;
   List<MovieTicket> _movies = [];
 
-  static const imageBase = 'http://31.97.206.144:8127';
+  static const imageBase = 'http://31.97.228.17:8127';
 
   String _img(String path) =>
       path.startsWith('http') ? path : '$imageBase$path';

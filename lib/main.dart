@@ -1,4 +1,82 @@
-import 'package:backup_ticket/provider/auth/auth_provider.dart';
+// import 'package:backup_ticket/provider/auth/login_provider.dart';
+// import 'package:backup_ticket/provider/auth/otp_provider.dart';
+// import 'package:backup_ticket/provider/auth/register_provider.dart';
+// import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
+// import 'package:backup_ticket/provider/cart/cart_provider.dart';
+// import 'package:backup_ticket/provider/forgot/forgot_password_provider.dart';
+// import 'package:backup_ticket/provider/movie/get_movie_ticket_provider.dart';
+// import 'package:backup_ticket/provider/movie/movie_category_provider.dart';
+// import 'package:backup_ticket/provider/movie/movie_ticket_provider.dart';
+// import 'package:backup_ticket/provider/movie_poster/movie_poster_provider.dart';
+// import 'package:backup_ticket/provider/ongoing/ongoing_movie_provider.dart';
+// import 'package:backup_ticket/provider/profile/profile_provider.dart';
+// import 'package:backup_ticket/provider/purchaseticket/purchase_ticket_provider.dart';
+// import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.dart';
+// import 'package:backup_ticket/provider/selltickets/sell_bus_ticket_provider.dart';
+// import 'package:backup_ticket/provider/selltickets/sell_movie_ticket_provider.dart';
+// import 'package:backup_ticket/views/splash/splash_screen.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await Firebase.initializeApp();
+
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MultiProvider(
+//       providers: [
+//         ChangeNotifierProvider(create: (context) => AuthProvider()),
+//         ChangeNotifierProvider(create: (context) => OtpProvider()),
+//         ChangeNotifierProvider(create: (context) => LoginProvider()),
+//         ChangeNotifierProvider(create: (context) => MovieTicketProvider()),
+//         ChangeNotifierProvider(create: (context) => UserProfileProvider()),
+//         ChangeNotifierProvider(create: (context) => BusTicketProvider()),
+//         ChangeNotifierProvider(create: (context) => MovieCategoryProvider()),
+//         ChangeNotifierProvider(create: (context) => OngoingMoviesProvider()),
+//         ChangeNotifierProvider(create: (context) => MovieTicketProviderapi()),
+//         ChangeNotifierProvider(create: (context) => GetMovieTicketProvider()),
+//         ChangeNotifierProvider(create: (context) => CartProvider()),
+//         ChangeNotifierProvider(create: (context) => ProfileProvider()),
+//         ChangeNotifierProvider(create: (context) => PasswordProvider()),
+//         ChangeNotifierProvider(create: (context) => TicketProvider()),
+//         ChangeNotifierProvider(create: (_) => MoviePosterProvider()),
+//         ChangeNotifierProvider(create: (_) => PurchasedTicketProvider()),
+//       ],
+//       child: MaterialApp(
+//         title: 'Backup Ticket',
+//         theme: ThemeData(
+//           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+//         ),
+//         debugShowCheckedModeBanner: false,
+//         home: const SplashScreen(),
+//       ),
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import 'package:backup_ticket/provider/auth/login_provider.dart';
 import 'package:backup_ticket/provider/auth/otp_provider.dart';
 import 'package:backup_ticket/provider/auth/register_provider.dart';
@@ -16,13 +94,34 @@ import 'package:backup_ticket/provider/purchaseticket/purchased_ticket_provider.
 import 'package:backup_ticket/provider/selltickets/sell_bus_ticket_provider.dart';
 import 'package:backup_ticket/provider/selltickets/sell_movie_ticket_provider.dart';
 import 'package:backup_ticket/views/splash/splash_screen.dart';
+
+// NEW imports
+import 'package:backup_ticket/views/firebase/fcm_service.dart';
+import 'package:backup_ticket/views/firebase/firebase_notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('🔕 Background message: ${message.data}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // NEW — register background handler BEFORE runApp
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // NEW — initialize local notifications (creates Android channel)
+  await LocalNotificationService.init();
+
+  // NEW — initialize FCM (permissions, token fetch, foreground listener)
+  await FCMService().initialize();
 
   runApp(const MyApp());
 }
@@ -48,10 +147,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ProfileProvider()),
         ChangeNotifierProvider(create: (context) => PasswordProvider()),
         ChangeNotifierProvider(create: (context) => TicketProvider()),
-            ChangeNotifierProvider(create: (_) => MoviePosterProvider()),
-                        ChangeNotifierProvider(create: (_) => PurchasedTicketProvider()),
-
-
+        ChangeNotifierProvider(create: (_) => MoviePosterProvider()),
+        ChangeNotifierProvider(create: (_) => PurchasedTicketProvider()),
       ],
       child: MaterialApp(
         title: 'Backup Ticket',

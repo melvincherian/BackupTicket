@@ -431,26 +431,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  import 'package:backup_ticket/provider/auth/login_provider.dart';
+import 'package:backup_ticket/provider/auth/login_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'signup_screen.dart';
@@ -469,6 +450,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  
+
 
   final FocusNode _phoneFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
@@ -511,6 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -575,7 +559,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           SizedBox(height: sp(12)),
 
-                          _label('Mobile Number', sp),
+                          _label('Enter your Mobile Number', sp),
                           _inputBox(
                             height: bh(52),
                             child: TextFormField(
@@ -584,21 +568,28 @@ class _LoginScreenState extends State<LoginScreen> {
                               maxLength: 10,
                               keyboardType: TextInputType.phone,
                               validator: _validatePhone,
+                               textAlignVertical: TextAlignVertical.center,
                               onChanged: (v) {
                                 if (v.length == 10) {
-                                  FocusScope.of(context)
-                                      .requestFocus(_passwordFocus);
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(_passwordFocus);
                                 }
                               },
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 counterText: '',
-                                prefixIcon: Icon(Icons.phone),
+                                prefixIcon: const Icon(Icons.phone),
                                 border: InputBorder.none,
+                                hintText: '9961593179',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: sp(14),
+                                ),
                               ),
                             ),
                           ),
 
-                          _label('Password', sp),
+                          _label('Enter your Password', sp),
                           _inputBox(
                             height: bh(52),
                             child: TextFormField(
@@ -606,8 +597,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               focusNode: _passwordFocus,
                               obscureText: !_isPasswordVisible,
                               validator: _validatePassword,
+                              textAlignVertical: TextAlignVertical.center,
                               decoration: InputDecoration(
                                 prefixIcon: const Icon(Icons.lock),
+                                hintText: '••••••••',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: sp(14),
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
@@ -616,8 +613,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      _isPasswordVisible =
-                                          !_isPasswordVisible;
+                                      _isPasswordVisible = !_isPasswordVisible;
                                     });
                                   },
                                 ),
@@ -667,7 +663,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: sp(8)),
 
                           Center(
-                            child: Row(
+                            child: Row( 
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -679,8 +675,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            const SignupScreen(),
+                                        builder: (_) => const SignupScreen(),
                                       ),
                                     );
                                   },
@@ -720,15 +715,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _label(String text, double Function(double) sp) => Padding(
-        padding: EdgeInsets.only(bottom: sp(4)),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: sp(13),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
+    padding: EdgeInsets.only(bottom: sp(4)),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: sp(13), fontWeight: FontWeight.w500),
+    ),
+  );
 
   Widget _inputBox({required double height, required Widget child}) {
     return Container(

@@ -3,7 +3,7 @@ import 'package:backup_ticket/model/purchased_ticket_models.dart';
 import 'package:http/http.dart' as http;
 
 class PurchasedTicketService {
-  static const _baseUrl = 'http://31.97.206.144:8127';
+  static const _baseUrl = 'http://31.97.228.17:8127';
 
   Future<List<PurchasedOrder>> fetchPurchasedTickets(String userId) async {
     final response = await http.get(

@@ -779,7 +779,7 @@ class _DetailScreenState extends State<DetailScreen> {
   String? _userId;
   bool _showDetails = true;
 
-  static const String ticketImageBaseUrl = "http://31.97.206.144:8127";
+  static const String ticketImageBaseUrl = "http://31.97.228.17:8127";
 
   String getTicketImageUrl(String imagePath) {
     if (imagePath.startsWith('http')) {
@@ -888,7 +888,7 @@ class _DetailScreenState extends State<DetailScreen> {
       }
 
       final response = await http.post(
-        Uri.parse('http://31.97.206.144:8127/api/auth/booktickets'),
+        Uri.parse('http://31.97.228.17:8127/api/auth/booktickets'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'userId': _userId,

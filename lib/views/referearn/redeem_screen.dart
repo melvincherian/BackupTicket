@@ -989,7 +989,7 @@ class _RedeemScreenState extends State<RedeemScreen> {
       });
 
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:8127/api/auth/getuserwallet/$_userId'),
+        Uri.parse('http://31.97.228.17:8127/api/auth/getuserwallet/$_userId'),
       );
 
       if (response.statusCode == 200) {
@@ -1403,7 +1403,7 @@ class _RedeemModalState extends State<RedeemModal> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://31.97.206.144:8127/api/auth/sendredemption/${widget.userId}'),
+        Uri.parse('http://31.97.228.17:8127/api/auth/sendredemption/${widget.userId}'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'amount': double.parse(_amountController.text),

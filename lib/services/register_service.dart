@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 
 
 class AuthService {
-  // Register user
   Future<RegisterResponse> register(RegisterRequest request) async {
     try {
       final response = await http.post(
@@ -35,8 +34,4 @@ class AuthService {
       throw Exception('Error during registration: $e');
     }
   }
-
-  // Add other auth methods as needed
-  // Future<LoginResponse> login(LoginRequest request) async { }
-  // Future<VerifyOtpResponse> verifyOtp(VerifyOtpRequest request) async { }
 }

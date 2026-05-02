@@ -37,7 +37,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     }
 
     final String url =
-        'http://31.97.206.144:8127/api/auth/deletemyaccount/$userId';
+        'http://31.97.228.17:8127/api/auth/deletemyaccount/$userId';
 
     setState(() => _isDeleting = true);
 

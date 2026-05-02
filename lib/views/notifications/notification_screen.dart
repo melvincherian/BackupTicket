@@ -919,7 +919,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   bool isLoading = true;
   String? errorMessage;
 
-  static const String imageBaseUrl = "http://31.97.206.144:8127";
+  static const String imageBaseUrl = "http://31.97.228.17:8127";
 
   @override
   void initState() {
@@ -939,7 +939,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       }
 
       final url =
-          'http://31.97.206.144:8127/api/auth/mynotification/${user.id}';
+          'http://31.97.228.17:8127/api/auth/mynotification/${user.id}';
 
       final response = await http.get(Uri.parse(url));
 

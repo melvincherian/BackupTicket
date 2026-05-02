@@ -435,7 +435,7 @@ class _MovieScreenState extends State<MovieScreen> {
   String? userName;
   String? _userProfileImage;
 
-  static const String ticketImageBaseUrl = "http://31.97.206.144:8127";
+  static const String ticketImageBaseUrl = "http://31.97.228.17:8127";
 
   String getTicketImageUrl(String imagePath) {
     if (imagePath.startsWith('http')) {
@@ -1160,7 +1160,7 @@ class _MovieScreenState extends State<MovieScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
-                "http://31.97.206.144:8127${movie.image}",
+                "http://31.97.228.17:8127${movie.image}",
                 fit: BoxFit.fill,
                 width: double.infinity,
               ),

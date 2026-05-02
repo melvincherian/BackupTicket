@@ -24,14 +24,14 @@ class PasswordProvider with ChangeNotifier {
   }
 
   // Forgot Password - Send OTP
-  Future<bool> forgotPassword(String phoneNumber) async {
+  Future<bool> forgotPassword(String email) async {
     _isLoading = true;
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
 
     try {
-      final result = await _passwordService.forgotPassword(phoneNumber);
+      final result = await _passwordService.forgotPassword(email);
 
       if (result['success']) {
         _successMessage = result['message'];

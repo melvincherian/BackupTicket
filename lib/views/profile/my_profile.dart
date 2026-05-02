@@ -757,7 +757,7 @@ class _MyProfileState extends State<MyProfile> {
       _userId = user.id;
 
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:8127/api/auth/myprofile/$_userId'),
+        Uri.parse('http://31.97.228.17:8127/api/auth/myprofile/$_userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -882,7 +882,7 @@ class _MyProfileState extends State<MyProfile> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://31.97.206.144:8127/api/auth/update-profile/$_userId'),
+        Uri.parse('http://31.97.228.17:8127/api/auth/update-profile/$_userId'),
       );
 
       // Add headers
@@ -999,7 +999,7 @@ class _MyProfileState extends State<MyProfile> {
       String imageUrl = _profileImageUrl!;
       if (!imageUrl.startsWith('http')) {
         imageUrl =
-            'http://31.97.206.144:8127/${imageUrl.replaceAll('\\', '/')}';
+            'http://31.97.228.17:8127/${imageUrl.replaceAll('\\', '/')}';
       }
 
       return Image.network(

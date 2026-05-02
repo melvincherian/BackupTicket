@@ -1,7 +1,7 @@
 
 class ApiConstants {
   // Base URL
-  static const String baseUrl = 'http://31.97.206.144:8127';
+  static const String baseUrl = 'http://31.97.228.17:8127';
   static const String register = '$baseUrl/api/auth/register';
   static const String verifyotp='$baseUrl/api/auth/verify-otp';
   static const String login='$baseUrl/api/auth/login';
@@ -18,7 +18,6 @@ class ApiConstants {
   static const String forgotPassword='$baseUrl/api/auth/forgot-password';
   static const String resetpassword='$baseUrl/api/auth/reset-password';
   static const String purchasemovieticket='$baseUrl/api/auth/purchasedmovietickets/:userId';
-  static const String createbusticket='$baseUrl/api/auth/';
   
   
 }

@@ -47,10 +47,8 @@ class OtpService {
     try {
       final response = await verifyOtp(otp: otp, token: token);
       
-      // Save the new auth token
       await SharedPrefsHelper.saveToken(response.token);
       
-      // Set logged in status
       await SharedPrefsHelper.setLoggedIn(true);
       
       return true;
@@ -59,11 +57,8 @@ class OtpService {
     }
   }
 
-  // Resend OTP (if you have this endpoint)
   Future<void> resendOtp(String token) async {
     try {
-      // Implement resend OTP logic if available
-      // This is a placeholder
       throw UnimplementedError('Resend OTP endpoint not defined');
     } catch (e) {
       throw Exception('Failed to resend OTP: $e');
@@ -71,7 +66,6 @@ class OtpService {
   }
 }
 
-// Model for OTP Verification Response
 class OtpVerificationResponse {
   final bool success;
   final String message;

@@ -41,7 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
     'English'
   ];
 
-  static const String ticketImageBaseUrl = "http://31.97.206.144:8127";
+  static const String ticketImageBaseUrl = "http://31.97.228.17:8127";
 
   String getTicketImageUrl(String imagePath) {
     if (imagePath.startsWith('http')) return imagePath;

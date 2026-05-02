@@ -5,8 +5,7 @@ import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:http/http.dart' as http;
 
 class PasswordService {
-  // Forgot Password - Send OTP
-  Future<Map<String, dynamic>> forgotPassword(String phoneNumber) async {
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
       final response = await http.post(
         Uri.parse(ApiConstants.forgotPassword),
@@ -14,7 +13,7 @@ class PasswordService {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'phoneNumber': phoneNumber,
+          'email': email,
         }),
       );
 

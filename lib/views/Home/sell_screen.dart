@@ -1,7 +1,6 @@
 import 'package:backup_ticket/constant/api_constant.dart';
 import 'package:backup_ticket/helper/auth_helper.dart';
 import 'package:backup_ticket/provider/auth/user_profile_provider.dart';
-import 'package:backup_ticket/views/Sell/sell_bus_ticket.dart';
 import 'package:backup_ticket/views/Sell/sell_movie_ticket.dart';
 import 'package:backup_ticket/widget/BackControl/back_confirm_dialog.dart';
 import 'package:flutter/material.dart';
@@ -55,15 +54,6 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
     _fadeController.forward();
     _slideController.forward();
   }
-
-  // Future<void> _loadUserName() async {
-  //   final name = await UserPreferences.getName();
-  //   if (mounted && name != null && name.isNotEmpty) {
-  //     setState(() {
-  //       _userName = name;
-  //     });
-  //   }
-  // }
 
   Future<void> _loadUserProfile() async {
     setState(() {
@@ -188,9 +178,6 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-
-                    // Right side (notification) - currently commented out
-                    // You can uncomment this if you want the notification icon back
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -335,24 +322,24 @@ class _SellScreenState extends State<SellScreen> with TickerProviderStateMixin {
             );
           },
         ),
-        const SizedBox(height: 20),
-        _AnimatedTicketCard(
-          delay: 150,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0277BD), Color(0xFF01579B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          icon: Icons.directions_bus,
-          title: 'Bus Tickets',
-          subtitle: 'Sell your bus travel tickets',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SellBusTicket()),
-            );
-          },
-        ),
+        // const SizedBox(height: 20),
+        // _AnimatedTicketCard(
+        //   delay: 150,
+        //   gradient: const LinearGradient(
+        //     colors: [Color(0xFF0277BD), Color(0xFF01579B)],
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //   ),
+        //   icon: Icons.directions_bus,
+        //   title: 'Bus Tickets',
+        //   subtitle: 'Sell your bus travel tickets',
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => SellBusTicket()),
+        //     );
+        //   },
+        // ),
 
         // SizedBox(height: 20),
         // _AnimatedTicketCard(

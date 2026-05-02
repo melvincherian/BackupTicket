@@ -2631,7 +2631,7 @@ Widget _buildTicketPreviewCard(PurchasedTicketWrapper wrapper) {
         ),
       );
 
-      final String url = 'http://31.97.206.144:8127$pdfPath';
+      final String url = 'http://31.97.228.17:8127$pdfPath';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode != 200) {

@@ -306,22 +306,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:backup_ticket/provider/auth/register_provider.dart';
 import 'package:backup_ticket/views/auth/otp_screen.dart';
 import 'package:flutter/material.dart';
@@ -380,11 +364,21 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         );
 
-        // Navigate to OTP screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  OtpScreen(number: _phoneController.text,token: authProvider.registerResponse!.token,)),
+          MaterialPageRoute(
+            builder: (context) => OtpScreen(
+              number: _emailController.text,
+              token: authProvider.registerResponse!.token,
+            ),
+          ),
         );
+
+        // // Navigate to OTP screen
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(builder: (context) =>  OtpScreen(number: _phoneController.text,token: authProvider.registerResponse!.token,)),
+        // );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -420,8 +414,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Enter email';
     }
-    if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
-        .hasMatch(value.trim())) {
+    if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
       return 'Enter valid email';
     }
     return null;
@@ -480,7 +473,10 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 8),
                             const Text(
                               'One step closer to great details on ticket',
-                              style: TextStyle(fontSize: 16, color: Colors.black),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                             ),
                             const SizedBox(height: 50),
 
@@ -496,9 +492,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 30),
 
                             // FIRST NAME
-                            const Text('First Name',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'First Name',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _firstNameController,
@@ -509,9 +509,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // LAST NAME
-                            const Text('Last Name',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Last Name',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _lastNameController,
@@ -522,9 +526,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // PHONE
-                            const Text('Mobile Number',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Mobile Number',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _phoneController,
@@ -536,9 +544,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // EMAIL
-                            const Text('E-mail',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'E-mail',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _emailController,
@@ -550,9 +562,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // REFERRAL
-                            const Text('Referral Code (Optional)',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Referral Code (Optional)',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             _inputField(
                               controller: _referralController,
@@ -562,9 +578,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // PASSWORD
-                            const Text('Password',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Password',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
@@ -577,8 +597,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
                                   hintText: "Enter your password",
-                                  prefixIcon:
-                                      Icon(Icons.lock, color: Colors.grey.shade500),
+                                  prefixIcon: Icon(
+                                    Icons.lock,
+                                    color: Colors.grey.shade500,
+                                  ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
@@ -594,7 +616,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
                                 ),
                               ),
                             ),
@@ -602,9 +626,13 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: 15),
 
                             // CONFIRM PASSWORD
-                            const Text('Confirm Password',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Confirm Password',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
@@ -617,8 +645,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                 obscureText: _obscureConfirmPassword,
                                 decoration: InputDecoration(
                                   hintText: "Confirm your password",
-                                  prefixIcon:
-                                      Icon(Icons.lock_outline, color: Colors.grey.shade500),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: Colors.grey.shade500,
+                                  ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscureConfirmPassword
@@ -628,13 +658,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                                        _obscureConfirmPassword =
+                                            !_obscureConfirmPassword;
                                       });
                                     },
                                   ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
                                 ),
                               ),
                             ),
@@ -644,7 +677,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             // BUTTON
                             _gradientButton(
                               title: "Let's Go",
-                              onPressed: authProvider.isLoading ? () {} : _handleSignup,
+                              onPressed: authProvider.isLoading
+                                  ? () {}
+                                  : _handleSignup,
                             ),
 
                             const SizedBox(height: 30),
@@ -657,7 +692,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
               ),
-              
+
               // Loading Indicator
               if (authProvider.isLoading)
                 Container(
@@ -696,15 +731,20 @@ class _SignupScreenState extends State<SignupScreen> {
           hintText: hint,
           prefixIcon: Icon(icon, color: Colors.grey.shade500),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
   }
 
   // Gradient Button
-  Widget _gradientButton({required String title, required VoidCallback onPressed}) {
+  Widget _gradientButton({
+    required String title,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -722,8 +762,9 @@ class _SignupScreenState extends State<SignupScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             elevation: 0,
           ),
           child: Text(
